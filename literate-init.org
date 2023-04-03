@@ -995,6 +995,51 @@ Imenu - дает не только удобный способ навигаци�
                   (ibuffer-do-sort-by-alphabetic))))
 #+end_src
 
+** COMMENT Centaur tabs. Каждый файл в своей вкладке
+
+#+begin_src emacs-lisp :tangle yes
+(use-package centaur-tabs
+    :ensure t
+    :demand
+    :init
+    ;; (setq centaur-tabs-style "bar")
+    (setq centaur-tabs-set-icons t)
+    (setq centaur-tabs-height 32)
+    (setq centaur-tabs-set-icons t
+          centaur-tabs-gray-out-icons 'buffer
+          centaur-tabs-set-bar 'left
+          centaur-tabs-set-modified-marker t
+          centaur-tabs-close-button "✕"
+          centaur-tabs-modified-marker "•"
+          ;; Scrolling (with the mouse wheel) past the end of the tab list
+          ;; replaces the tab list with that of another Doom workspace. This
+          ;; prevents that.
+          centaur-tabs-cycle-scope 'tabs)
+    (defun centaur-tabs-buffer-groups ()
+        "Group all."
+        "Emacs")
+    :config
+    (centaur-tabs-mode t)
+    (centaur-tabs-headline-match)
+    :bind
+    ("C-<prior>" . centaur-tabs-backward)
+    ("C-<next>" . centaur-tabs-forward))
+
+;; (use-package! centaur-tabs
+;;               :hook (doom-first-file . centaur-tabs-mode)
+;;               :init
+;;               (setq centaur-tabs-set-icons t
+;;                     centaur-tabs-gray-out-icons 'buffer
+;;                     centaur-tabs-set-bar 'left
+;;                     centaur-tabs-set-modified-marker t
+;;                     centaur-tabs-close-button "✕"
+;;                     centaur-tabs-modified-marker "•"
+;;                     ;; Scrolling (with the mouse wheel) past the end of the tab list
+;;                     ;; replaces the tab list with that of another Doom workspace. This
+;;                     ;; prevents that.
+;;                     centaur-tabs-cycle-scope 'tabs))
+#+end_src
+
 * Работа с файлами
 
 ** Автоматическое обновление буферов при внешнем изменении их содержимого
@@ -1075,6 +1120,19 @@ dired-окне. Для этого надо установить соответс
 ;; ...
 #+end_src
 
+** Графический диалог открытия файла
+
+Сохранено, как способ открытия диалогового окна с выбором файла.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/find-file-with-dialog ()
+    (interactive)
+    (let ((last-nonmenu-event nil)
+          (use-dialog-box t)
+          (use-file-dialog t))
+        (call-interactively #'find-file-other-tab)))
+#+end_src
+   
 * Проекты (projects)
 
 ** Установка и настройка работы с проектами (Projectile)
