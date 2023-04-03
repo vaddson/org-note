@@ -1,0 +1,2240 @@
+#+title: Конфигурация Org-note для Emacs
+#+startup: content
+#+startup: noindent
+
+* Вводная 
+
+...
+
+* Lexical-binding. Лексические замыкания
+
+С ними лучше, чем без них. :)
+
+Включаются локальной переменной =lexical-binging= и работают в
+пределах своего буфера.  При загрузке el-файла можно включить
+специальным комментарием в начале.
+
+Включим лексические замыкания в этом конфиге.
+
+#+begin_src emacs-lisp :tangle yes
+;;; -*- lexical-binding: t -*-
+#+end_src
+  
+
+* Отладка
+
+Создаем буфер =*my/log-buffer*= и пишем в него логи.
+Функция для записи - =(my/log TEXT)=.
+Иногда нужно для отладки кода в этом документе.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/log-buffer (get-buffer-create "*my/log-buffer*"))
+
+(defun my/log (text)
+    (interactive "s")
+    (with-current-buffer my/log-buffer
+        (goto-char (point-max))
+        (insert text)
+        (insert "\n")
+        (goto-char (point-max))))
+#+end_src
+  
+* Общие параметры и переменные данной конфигурации
+
+Здесь собраны параметры, значения которых будут далее использованы по всему
+конфигу.
+
+** Директория файлов конфигурации
+
+Для дальнейшей работы в переменой =my/config-dir= устанавливается путь
+к файлам настроек, т.е. путь к проекту с этим файлом.
+Значение переменной my/config-dir задается в файле проекта [[./init.el][init.el]].
+
+** Идентификация пользователя Emacs
+
+Подпишемся, как просят. :)
+
+"Some functionality uses this to identify you, e.g. GPG configuration,
+email clients, file templates and snippets."
+
+#+begin_src emacs-lisp :tangle yes
+(setq user-full-name "replace_me"
+      user-mail-address "replace_me@replace_me.replace_me")
+#+end_src
+
+* Подготовка к установке пакетов из репозиториев
+
+Подцепим репозиторий melpa.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+#+end_src
+
+Действия перед загрузкой пакетов. (Если какой-то пакет по прошествии
+времени упорно не находится в репозиториях, спасает ручной вызов
+функции =package-refresh-contents=.
+
+#+begin_src emacs-lisp :tangle yes
+(setq package-enable-at-startup nil)
+(package-initialize)
+(unless package-archive-contents
+    (package-refresh-contents))
+#+end_src
+
+Пакеты будем цеплять через =use-package=. Установим его.
+
+#+begin_src emacs-lisp :tangle yes
+(if (not (package-installed-p 'use-package))
+    (progn (package-refresh-contents)
+           (package-install 'use-package)))
+#+end_src
+
+Не будем кошмарить логом с ошибками, если там только предупреждения.
+
+#+begin_src emacs-lisp :tangle yes
+(setq warning-minimum-level :error)
+#+end_src
+
+* Пока редактор загружается, поправим ему внешний вид
+
+** Меню и панель инструментов (menu and toolbar)
+
+Поскольку цель этой конфигурации - сделать максимально понятный
+редактор для неподготовленного человека, покажем все элементы
+управления.
+
+#+begin_src emacs-lisp :tangle yes
+(menu-bar-mode     1)  ;; Графическое меню.
+(tool-bar-mode     1)  ;; Tool-bar.
+(scroll-bar-mode   1)  ;; Полосы прокрутки.
+#+end_src
+
+** Красивые темы и установка темы по-умолчанию
+
+Загружаем красивые темы и устанавливаем одну из них.
+Стараемся успеть до загрузки всех остальных настроек.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package doom-themes
+    :ensure t
+    :config
+    (load-theme 'doom-one t)
+    ;; (load-theme 'doom-gruvbox-light t)
+    ;; (load-theme 'doom-molokai t)
+    )
+#+end_src
+
+* Среда
+
+** Сохранение состояния для Desktop
+
+Запретим сохранение среды, чтобы не мешалось.
+
+#+begin_src emacs-lisp :tangle yes
+(setq desktop-save-mode nil)
+#+end_src
+
+** Удаление файлов и бэкапы
+
+Файлы удаляем только в корзину.
+
+#+begin_src emacs-lisp :tangle yes
+(setq delete-by-moving-to-trash t)
+#+end_src
+
+А бэкапы файлов запрещаем. Очень неудобно они называются, да и не нужны особо.
+
+#+begin_src emacs-lisp :tangle yes
+(setq make-backup-files nil)
+(setq auto-save-default nil)
+#+end_src
+
+** Звуковой сигнал (типа "гудок")
+
+Отключаем гудок.
+
+#+begin_src emacs-lisp :tangle yes
+(setq ring-bell-function 'ignore)
+#+end_src
+
+
+* Внешний вид UI и GUI
+
+** Мигание курсора
+
+Выключаем мигание курсора.
+
+#+begin_src emacs-lisp :tangle yes
+(blink-cursor-mode 0)
+#+end_src
+
+** Настройка статусной панели (modeline)
+
+Установим в панели отображение позиции курсора.
+
+#+begin_src emacs-lisp :tangle yes
+(setq mode-line-position (list "(%l,%C)"))
+#+end_src
+
+** COMMENT Показ объекта внутри которого находится курсор (header-line)
+
+Часто бывает нужно посмотреть, в каком объекте находится курсор. Это
+может быть функция из программного кода или заголовок в org-mode или
+что-то еще.
+
+Сделаем такую строку.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/show-header-line ()
+    (setq-default header-line-format
+                  '((which-func-mode ("" which-func-format " ")))))
+
+(defun my/hide-header-line ()
+    (setq-default header-line-format nil))
+
+(which-function-mode)
+(my/show-header-line)
+(setq mode-line-misc-info
+      ;; We remove Which Function Mode from the mode line, because it's mostly
+      ;; invisible here anyway.
+      (assq-delete-all 'which-function-mode mode-line-misc-info))
+#+end_src
+
+Цвет текста в header-line перенастроим, поскольку по-умолчанию он слишком слепой.
+
+Type [M-x list-faces-display] to see all colors.
+
+#+begin_src emacs-lisp :tangle yes
+(set-face-foreground 'which-func            "#7f9fff" )
+#+end_src
+
+** Подсветка кодов цвета соответствующим цветом (rainbow mode)
+
+Здесь на постоянку устанавливается подсветка фона у текстовых значений
+цветов, например: #aa0000, #00aa00, #0000aa
+
+#+begin_src emacs-lisp :tangle yes
+(use-package rainbow-mode
+	:ensure t
+	:config
+	(define-globalized-minor-mode global-rainbow-mode rainbow-mode
+		(lambda () (rainbow-mode 1))))
+#+end_src
+
+Можно выставить подсветку цветов везде по-умолчанию через вызов
+=(global-rainbow-mode 1)=. Однако, она не дружит с некоторыми более
+полезными режимами, такими как org-agenda. Так что оставим код ниже
+только для примера.
+
+#+begin_example emacs-lisp :tangle yes
+(global-rainbow-mode 1)  ; Remove comment for turn on on start Emacs.
+#+end_example
+
+Лучше поставим режим rainbow-mode только для программного и org
+режимов.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'prog-mode-hook (lambda () (rainbow-mode 1)))
+(add-hook 'org-mode-hook (lambda () (rainbow-mode 1)))
+#+end_src
+
+** Увеличение и уменьшение шрифта в окне
+
+Нужно в основном во время демонстраций экрана.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'face-remap)
+(text-scale-mode 1)
+#+end_src
+
+Горячие клавиши, как в любом редакторе или консоли.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-=") #'text-scale-increase)
+(global-set-key (kbd "C--") #'text-scale-decrease)
+#+end_src
+
+** Настройка окна компиляции (compilation)
+
+Для окна компиляции выставим настройки:
+- Гасить процесс компиляции перед началом нового.
+- Запрос на сохранение всех буферов при старте компиляции.
+- Останавливать прокрутку в окне компиляции при первой строчке с ошибкой.
+- Цветная раскраска текста.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'compile)
+
+(setq compilation-always-kill t       ; kill compilation process before starting another
+      compilation-ask-about-save t    ; save all buffers on `compile'
+      compilation-scroll-output 'first-error)
+(add-hook 'compilation-filter-hook #'my/apply-ansi-color-to-compilation-buffer)
+
+(defun my/apply-ansi-color-to-compilation-buffer ()
+    (with-silent-modifications
+        (ansi-color-apply-on-region compilation-filter-start (point))))
+#+end_src
+
+** Общий буфер обмена для Emacs и ОС
+
+Сделаем общий буфер обмена между редактором и системой.
+
+#+begin_src emacs-lisp :tangle yes
+(setq x-select-enable-clipboard t)
+#+end_src
+
+* Редактирование текста и интерфейс к нему
+
+** CUA-mode. Совместимость с привычными всем блокнотами
+
+Совместимость с привычными клавишами копирования, вставки и прочего.
+
+#+begin_src emacs-lisp :tangle yes
+;; (use-package org-cua-dwim
+;;     :ensure t)
+(cua-mode t)
+(setq org-support-shift-select t)
+(setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
+(transient-mark-mode 1) ;; No region when it is not highlighted
+(setq cua-keep-region-after-copy t) ;; Standard Windows behaviour
+#+end_src
+
+** Отмена изменений на основе дерева (undo-tree)
+
+Очень удобное окошко с деревом изменений по буферу.
+Сразу отменим запись дерева изменений в файл.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package undo-tree
+	:ensure t
+	:config
+    (setq undo-tree-auto-save-history nil))
+#+end_src
+
+Подружим undo-tree с редактором.
+
+#+begin_src emacs-lisp :tangle yes
+(global-undo-tree-mode 1)
+#+end_src
+
+Чтобы в окошке с деревом изменений не помнить про клавишу "d"
+(показать diff изменеий), включим ее эффект сразу при показе этого
+окна.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/undo-tree-visualize ()
+    (interactive)
+    (undo-tree-visualize)
+    (undo-tree-visualizer-toggle-diff))
+#+end_src
+
+И переопределим предустановленные из пакета клавиши "Ctrl-x u".
+
+#+begin_src emacs-lisp :tangle yes
+(define-key undo-tree-map (kbd "C-x u") #'my/undo-tree-visualize)
+#+end_src
+   
+** Прокручивание текста
+
+Ставим прокручивание текста мышкой по три строки, клавишами по одной и
+забываем об этом.
+
+#+begin_src emacs-lisp :tangle yes
+(setq mouse-wheel-scroll-amount '(3 ((shift) . 1))) ;; one line at a time
+(setq mouse-wheel-progressive-speed nil) ;; don't accelerate scrolling
+(setq mouse-wheel-follow-mouse 't) ;; scroll window under mouse
+#+end_src
+
+Прокрутка курсором по одной строке.
+
+#+begin_src emacs-lisp :tangle yes
+(setq scroll-step 1
+      scroll-preserve-screen-position t  ;; nil
+      scroll-margin 0  ;; 0
+      scroll-conservatively 10  ;; 0
+      maximum-scroll-margin 0.0  ;; 0.25
+      scroll-up-aggressively 0.0   ;; nil
+      scroll-down-aggressively 0.0)  ;; nil
+#+end_src
+
+Начиная с Emacs 29, имеем плавную прокрутку по пикселям. Наконец-то
+картинки при прокрутке не скачут на весь размер (ну, почти).
+
+#+begin_src emacs-lisp :tangle yes
+(when (fboundp 'pixel-scroll-precision-mode)
+    (pixel-scroll-precision-mode 1))
+#+end_src
+
+** Avy. Перемещение по всему редактору
+
+Все любят =Avy=. Этот пакет позволяет перемещать курсор на любую
+позицию видимого в редакторе текста. Текст этот может быть как в
+активном окне, так и в любом другом.
+
+Поставим пакет и назначим переход по двум символам или
+последовательности символов.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package avy
+    :ensure t)
+#+end_src
+
+** Нумерация строк
+
+Зададим в переменной нумерацию строк по-умолчанию.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/display-line-numbers 'value)
+#+end_src
+
+Определим функции переключения нумерации строк.
+Действовать будем через локальные переменные буферов
+~display-line-numbers~.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/display-line-numbers (&optional arg)
+    (interactive)
+    (cond ((not arg)
+           (if display-line-numbers
+               (setq-local display-line-numbers nil)
+               (setq-local display-line-numbers my/display-line-numbers)))
+          ((or (equal t arg) (> arg 0))
+           (setq-local display-line-numbers my/display-line-numbers))
+          ((< arg 0)
+           (setq-local display-line-numbers nil))))
+
+(defun my/display-next-line-numbers ()
+    (interactive)
+    (pcase display-line-numbers
+        (`relative
+         (setq-local display-line-numbers 'value))
+        (`value
+         (setq-local display-line-numbers nil))
+        (_
+         (setq-local display-line-numbers 'relative))))
+#+end_src
+
+Теперь покажем номера строк для текстовых и программных режимов.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'text-mode-hook (lambda () (my/display-line-numbers 1)))
+(add-hook 'prog-mode-hook (lambda () (my/display-line-numbers 1)))
+(add-hook 'org-mode-hook (lambda () (my/display-line-numbers 1)))
+#+end_src
+
+Горячие клавиши смены показа нумерации строк.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Wgrep. Отслеживаем не сохраненное во всех буферах
+
+При выходе из редактора тот предупредит о не сохраненных буферах.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package wgrep
+    :ensure t)
+#+end_src
+
+** Автоотступ (indent)
+
+Четыре пробела - лучший отступ.
+
+#+begin_src emacs-lisp :tangle yes
+(setq-default tab-width 4) ;; ширина табуляции - 4 пробельных символа
+(setq-default c-basic-offset 4)
+(setq-default standart-indent 4) ;; стандартная ширина отступа - 4 пробельных символа
+(setq-default plantuml-indent-level 4)
+(setq-default lisp-body-indent 4) ;; сдвигать lisp-выражения на 4 пробельных символа
+(setq lisp-indent-function 'common-lisp-indent-function)
+#+end_src
+
+** Переключение раскладки клавиатуры
+
+Внутри Vim и evil-mode много удобней иметь внутренне переключение
+раскладки клавиатуры. Такое переключение позволяет пользоваться
+командами модального режима вне зависимости от состояния раскладки. И,
+хотя, переключение в evil-mode работает хуже, чем в Vim, все равно оно
+того стоит.
+
+#+begin_src emacs-lisp :tangle yes
+(set-input-method 'russian-computer)
+(global-set-key (kbd "C-c d") #'toggle-input-method)
+#+end_src
+
+** Схлопывание текста
+
+Выбрал пакет =yafolding=. Объект схлопывания определяется по
+отступам. Есть три варианта схлопывания:
+- объекта,
+- родительского объекта,
+- всех объектов (может сильно тормозить).
+
+#+begin_src emacs-lisp :tangle yes
+(use-package yafolding
+	:ensure t
+	:config
+	(add-hook 'buffer-list-update-hook 'yafolding-mode))
+#+end_src
+
+Назначим горячие клавиши для схлопывания текста.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Подсветка отступов
+
+Можно подсветить верткальньной "чертой" отступы в тексте. Почти всегда
+это удобно. Подсвечивать можно или символом "|", что не всегда
+работает гладко, или перекрашивая фон у символов (тут без проблем).
+
+#+begin_src emacs-lisp :tangle yes
+(use-package highlight-indent-guides
+    :ensure t
+    :config
+    (setq highlight-indent-guides-method 'column)
+    (dolist (mode '(prog-mode-hook
+                    org-mode-hook
+                    yaml-mode-hook
+                    markdown-mode-hook))
+        (add-hook mode 'highlight-indent-guides-mode)))
+#+end_src
+   
+** Проверка орфографии
+
+Проверка орфографии делается на основе утилиты hunspell. Ее нужно
+предварительно установить в систему.
+: sudo pacman -S hunspell
+
+Словари лежат в директории настроек редактора ../dictionaries/hunspell/.
+Чтобы утилита hunspell имела к ним доступ, установим переменную среды DICPATH.
+
+#+begin_src emacs-lisp :tangle yes
+(setenv "DICPATH" (concat my/config-dir "/dictionaries/hunspell/"))
+#+end_src
+
+Осталось настроить ispell. Код ниже работает как по русским, так и по английским словам.
+
+#+begin_src emacs-lisp :tangle yes
+(when (executable-find "hunspell")
+    (setq ispell-local-dictionary-alist '(("russian"
+             "[АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯабвгдеёжзийклмнопрстуфхцчшщьыъэюяA-Za-z]"
+             "[^АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЬЫЪЭЮЯабвгдеёжзийклмнопрстуфхцчшщьыъэюяA-Za-z]"
+             ""  ;; было "[-']", но убрал, чтобы эти символы не мешали обнаружению ошибок.
+             nil ("-d" "ru_RU,en_US") nil utf-8))
+          ispell-program-name "hunspell"
+          ispell-dictionary "russian"
+          ispell-really-aspell nil
+          ispell-really-hunspell t
+          ispell-encoding8-command t
+          ispell-silently-savep t))
+#+end_src
+
+Включаем проверку синтаксиса на лету в emacs с помощью =flyspell-mode=.
+Автоматическое его включение ставим только на редактирование литературных
+текстов (text, org, markdown и т.п.).
+
+#+begin_src emacs-lisp :tangle yes
+(dolist (hook '(text-mode-hook
+                org-mode-hook
+                markdown-mode-hook))
+    (add-hook hook (lambda ()
+                       (flyspell-mode 1))))
+#+end_src
+
+Подсказки по исправлению слова зашиты на функцию =ispell-word=.
+
+** Сниппеты Yasnippet
+
+Сниппет в Emacs - это заранее подготовленный кусок текста, который
+можно вставить себе в документ при редактировании.  Очень удобный и
+полезный инструмент! Сниппеты могут на лету доопределяться параметрами
+и быть привязаны к разным типам документов.
+
+Грузим пакеты, указываем директорию со своими сниппетами.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package yasnippet
+    :ensure t
+    :config
+    (add-to-list 'yas-snippet-dirs (concat my/config-dir "/snippets"))
+    (yas-global-mode 1))
+(use-package yasnippet-classic-snippets
+    :ensure t)
+(use-package yasnippet-snippets
+    :ensure t)
+(use-package ivy-yasnippet
+    :ensure t)
+#+end_src
+
+Горячие клавиши для выбора сниппета по его названию.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Закладки
+
+Есть очень удобные встроенные закладки.  Запоминают не только строку в
+буфере, но и позицию в строке.  Закладки сохраняются даже если буфер
+был закрыт.
+
+Назначим дополнительные горячие клавиши с лидером.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+   
+* Подсказки, выпадашки, автодополнения
+
+** Ivy - меню с поиском по частичному совпадению
+
+=Ivy= - одно из самых удобных меню с выбором элементов по частичному совпадению
+текста. (Есть более новый =Vertico=.)
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy
+    :ensure t
+    :config
+    (ivy-mode)
+    (setq ivy-use-virtual-buffers t)
+    (setq enable-recursive-minibuffers t))
+(use-package ivy-hydra
+    :ensure t)
+#+end_src
+
+Определим горячие клавиши на восстановление результатов последней
+сессии ivy.  (Помним, что буфер с результатами поиска можно
+зафиксировать клавишами =Ctrl-c Ctrl-o=.)
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Подсказки на клавиши
+
+При вводе клавишного аккорда получаем подсказку на его продолжение.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package guide-key
+    :ensure t
+    :diminish guide-key-mode)
+(use-package which-key
+    :ensure t
+    :config
+    (setq which-key-sort-order 'which-key-key-order-alpha)
+    (which-key-mode 1))
+#+end_src
+
+Пакет ниже дает развернутые подсказки. Поставим такую на подсказку для клавиш.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package helpful
+    :ensure t)
+;; ...
+#+end_src
+
+** Counsel. Меню вызова функции с более полным описанием
+
+Здесь нужен пакет =counsel=. Функциями из него подменяем стандартные.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package counsel
+    :ensure t)
+(use-package counsel-projectile
+    :ensure t
+    ;; :config
+    ;; (counsel-projectile-mode 1)
+    ;; (ivy-set-display-transformer #'counsel-projectile-find-file nil)
+    )
+#+end_src
+
+При поиске текста по проекту через =counsel-projectile-rg= нужно
+заходить в скрытые папки, но не трогать .git.  Сделаем настройки
+для ripgrep (добавим туда "--hidden" и "-g!.git").
+
+#+begin_src emacs-lisp :tangle yes
+(setq counsel-rg-base-command
+      '("rg" "--max-columns" "240" "--with-filename" "--no-heading"
+        "--line-number" "--color" "never" "--hidden" "-g!.git" "%s"))
+#+end_src
+
+Уберем "^" из начала поисковой строки в counsel и вообще в Ivy.
+
+#+begin_src emacs-lisp :tangle yes
+(setq ivy-initial-inputs-alist
+      '((counsel-minor . "+")
+        (counsel-package . "+")
+        (counsel-org-capture . "")
+        (counsel-M-x . "")
+        (counsel-describe-symbol . "")
+        (org-refile . "")
+        (org-agenda-refile . "")
+        (org-capture-refile . "")
+        (Man-completion-table . "")
+        (woman . "")))
+
+#+end_src
+
+Подменим стандартные функции на их counsel-аналог.
+Так, как это закомментарено ниже, не будет работать.
+Позже допилю другое решение.
+
+# #+begin_src emacs-lisp :tangle yes
+# (advice-add #'find-library :override #'counsel-find-library)
+# (advice-add #'info-lookup-symbol :override #'counsel-info-lookup-symbol)
+# (advice-add #'locate :override #'counsel-locate)
+# (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+# (global-set-key (kbd "C-c g") 'counsel-git)
+# (global-set-key (kbd "C-c j") 'counsel-git-grep)
+# (global-set-key (kbd "C-c k") 'counsel-ag)
+# (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+# #+end_src
+
+Определяем действия =counsel= на горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(setq suggest-key-bindings t)
+(global-set-key (kbd "M-x") 'counsel-M-x)
+(global-set-key (kbd "C-r") #'counsel-minibuffer-history)
+;; ...
+#+end_src
+
+** Company. Автодополнения
+
+Строим автодополнения через =Company= и =Ivy=.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package company
+    :ensure t
+    :config
+    (add-hook 'after-init-hook 'global-company-mode))
+(use-package company-dict
+    :ensure t)
+(use-package company-box
+    :ensure t)
+(use-package company-restclient
+    :ensure t)
+(use-package ivy-hydra
+    :ensure t)
+(use-package company-shell
+    :ensure t)
+#+end_src
+
+Чтобы автодополнения не были в lovercase, добавим следующее
+(по-умолчанию было 'case-replace):
+
+#+begin_src emacs-lisp :tangle yes
+(setq-default company-dabbrev-downcase nil)
+#+end_src
+
+** Наполнение полезным содержимым ivy-меню
+
+Теперь грузим пакет ivy-rich, который эту красоту и поддерживает.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ivy-rich
+    :ensure t)
+#+end_src
+
+Очень удобно при поиске описания переменной сразу видеть в минибуфере
+значения всех кандидатов.
+
+Чтобы так сделать, напишем трансформер для ivy (взято из Doom).
+
+#+begin_src emacs-lisp :tangle yes
+(defun doom/ivy-rich-describe-variable-transformer (cand)
+	"Previews the value of the variable in the minibuffer"
+	(let* ((sym (intern cand))
+		   (val (and (boundp sym) (symbol-value sym)))
+		   (print-level 3))
+		(replace-regexp-in-string
+		 "[\n\t\^[\^M\^@\^G]" " "
+		 (cond ((booleanp val)
+				(propertize (format "%s" val) 'face
+							(if (null val)
+								'font-lock-comment-face
+								'success)))
+			   ((symbolp val)
+				(propertize (format "'%s" val)
+							'face 'highlight-quoted-symbol))
+			   ((keymapp val)
+				(propertize "<keymap>" 'face 'font-lock-constant-face))
+			   ((listp val)
+				(prin1-to-string val))
+			   ((stringp val)
+				(propertize (format "%S" val) 'face 'font-lock-string-face))
+			   ((numberp val)
+				(propertize (format "%s" val) 'face 'highlight-numbers-number))
+			   ((format "%s" val)))
+		 t)))
+#+end_src
+
+Терерь осталось воспользоваться этим трансформером в списке
+=ivy-rich-display-transformers-list=.  В этом списке описываются
+колонки и правила их заполнения для мининбуфера ivy.
+
+#+begin_src emacs-lisp :tangle yes
+(plist-put ivy-rich-display-transformers-list
+           'counsel-describe-variable
+           '(:columns
+             ((counsel-describe-variable-transformer (:width 40))
+              (doom/ivy-rich-describe-variable-transformer (:width 50))
+              (ivy-rich-counsel-variable-docstring (:face font-lock-doc-face)))))
+#+end_src
+
+Для остальных выборов буферов тоже выведем информацию о
+кандидатах.
+
+#+begin_src emacs-lisp :tangle yes
+(let ((funcs '(persp-switch-to-buffer
+               projectile-switch-to-buffer-other-window
+               projectile-switch-to-buffer
+               projectile-read-buffer-to-switch
+               counsel-switch-buffer-other-window))
+      (actions (plist-get ivy-rich-display-transformers-list
+                          'ivy-switch-buffer)))
+    (dolist (func funcs)
+        (plist-put ivy-rich-display-transformers-list
+                   func
+                   actions)))
+#+end_src
+
+Выделение в буфере ivy на размер текста в строке очень раздражает,
+поскольку не всегда видно, что выбрано.  Намного удобней выделение
+строки на всю ширину окна.  К сожалению, я пока что не нашел, как
+установить описание колонок по-умолчанию, поэтому обхожусь костылем
+ниже.
+
+#+begin_src emacs-lisp :tangle yes
+(let ((funcs '(my/persp-frame-switch
+               persp-kill
+               counsel-find-file
+               find-file
+               my/make-frame-and-switch-perpective
+               counsel-projectile-switch-project
+               projectile-switch-project
+               my/switch-project-with-workspace-safe-title
+               my/switch-project-with-workspace
+               counsel-projectile-find-file
+               projectile-find-file
+               load-file
+               swiper
+               counsel-imenu
+               counsel-org-goto
+               describe-package
+               counsel-load-theme
+               load-theme
+               counsel-apropos
+               apropos
+               )))
+    (dolist (func funcs)
+        (plist-put ivy-rich-display-transformers-list
+                   func
+                   '(:columns
+                     ((ivy-rich-candidate (:width 1.0)))))))
+#+end_src
+
+Включаем информацию в ivy поиске.
+
+#+begin_src emacs-lisp :tangle yes
+(ivy-rich-mode 1)
+#+end_src
+
+** Некоторые дополнения пакетов
+
+Копирую сюда установку некоторых пакетов из прошлых конфигов.
+Прокомментирую как-нибудь позже.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package amx
+    :ensure t)
+(use-package flx
+    :ensure t)
+(use-package prescient
+    :ensure t)
+(use-package ivy-posframe
+    :ensure t)
+(use-package all-the-icons-ivy
+    :ensure t)
+#+end_src
+
+* Поиск и выделение
+
+** Swiper. Удобный живой поиск текста по открытому буфферу
+
+Очень удобный поиск текста по открытому буферу. Результаты показываются в
+минибуфере по мере ввода поискового текста.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package swiper
+    :ensure t)
+#+end_src
+
+Горячие клавиши для вызова поиска swiper.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Символ технического пробела `_'
+
+Emacs по-умолчанию не причисляет символ `_' к составу слова, что очень неудобно.
+Исправим положение.
+
+#+begin_src emacs-lisp :tangle yes
+(modify-syntax-entry ?_ "w")
+#+end_src
+
+** Чувствительность к регистру (прописные и строчные символы)
+
+Чувствительность нужна и важна (особенно при поиске).
+
+Есть три параметра настройки:
+- =sensitive=,
+- =insensitive=,
+- =smart=
+Возможно, =smart= даже удобней.
+
+Use [M-x toggle-case-fold-search] to toggle mode.
+
+#+begin_src emacs-lisp :tangle yes
+(setq case-fold-search nil)  ; Use [M-x toggle-case-fold-search] to toggle mode.
+#+end_src
+
+** Imenu. Навигация по документу через меню
+
+Imenu - дает не только удобный способ навигации по документу, но и
+показывает его структуру.  Если это текстовый файл с разметкой (org),
+то определит в нем заголовки (оглавление).  Если это программный код,
+то определит в нем классы и функции.
+
+Определим глубину заголовков (два по-умолчанию - это очень мало).
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-imenu-depth 8)
+#+end_src
+
+Определим горячие клавиши для навигации через imenu.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Установим дополнтельный пакет, который в отдельном окне отображает
+оглавление.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package imenu-list
+    :ensure t)
+;; ...
+#+end_src
+
+* Работа с окнами
+
+** Нумерация окон
+
+Работа с окнами на основе их нумерации. Нумерацию окон устанавливаем
+локальньно, в текущем фрейме (переменная =winum-scope=).
+
+#+begin_src emacs-lisp :tangle yes
+(use-package winum
+    :ensure t
+    :config
+    (winum-mode 1)
+    (setq winum-scope 'frame-local))
+#+end_src
+
+** Ширина разделителя окон
+
+Сделаем разделение окон по-заметнее.
+
+#+begin_src emacs-lisp :tangle yes
+(window-divider-mode 1)
+(setq window-divider-default-right-width 4)
+#+end_src
+
+** Настройка Ediff
+
+Настроим расположение окон для сравнения содежимого буферов.  Ставим
+окна сравниваемых буферов рядом (а не одно под другим), панель
+управления уводим вниз (а не в отдельный фрейм).
+
+#+begin_src emacs-lisp :tangle yes
+(require 'ediff)
+(setq ediff-diff-options "-w" ; turn off whitespace checking
+      ediff-split-window-function #'split-window-horizontally
+      ediff-window-setup-function #'ediff-setup-windows-plain)
+#+end_src
+
+* Работа с буферами
+
+** Показ буферов, разобранных по проектам
+
+Удобно видеть список буферов, разобранный по проектам.
+
+Загрузим пакеты.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ibuffer-projectile
+    :ensure t)
+(use-package ibuffer-vc
+    :ensure t)
+#+end_src
+
+Повесим хуки со страницы пакета ibuffer-projectile.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'ibuffer-hook
+          (lambda ()
+              (ibuffer-projectile-set-filter-groups)
+              (unless (eq ibuffer-sorting-mode 'alphabetic)
+                  (ibuffer-do-sort-by-alphabetic))))
+#+end_src
+
+* Работа с файлами
+
+** Автоматическое обновление буферов при внешнем изменении их содержимого
+
+Этот параметр позволит обновлять буфера, если файлы, с ними связанные, были
+изменены вне Emacs:
+
+#+begin_src emacs-lisp :tangle yes
+(global-auto-revert-mode 1)
+#+end_src
+
+Аналогично этот параметр позволит автоматически обьновлять такие буфера, как
+Dired:
+
+#+begin_src emacs-lisp :tangle yes
+(setq global-auto-revert-non-file-buffers t)
+#+end_src
+
+
+** Dired. Настройка файлового менеджера
+
+Установим автоматическое обновление содержимого окон Dired.
+
+#+begin_src emacs-lisp :tangle yes
+(setq dired-auto-revert-buffer #'dired-buffer-stale-p)
+#+end_src
+
+Копирование файлов удобно делать в директорию, что открыта в ближайшем
+dired-окне. Для этого надо установить соответствующий флажок.
+
+#+begin_src emacs-lisp :tangle yes
+(setq dired-dwim-target t)
+#+end_src
+
+Файлы в Dired сортируются опциями команды "ls".
+Из коробки по-умолчанию стоит сортировка по размеру ("SXU").
+Изменим ее на сортировку по имени ("XSU"):
+
+#+begin_src emacs-lisp :tangle yes
+(setq dired-ls-sorting-switches "XSU")
+#+end_src
+
+Теперь раскрасим представление файлов. Делаем это пакетом dired-k.
+(С флажком dired-k-style='git файлы будут иметь git-пометки.)
+
+#+begin_src emacs-lisp :tangle yes
+(use-package dired-k
+    :ensure t
+    :config
+    (setq dired-k-human-readable t
+          dired-k-style 'git)
+    (add-hook 'dired-initial-position-hook 'dired-k)
+    (add-hook 'dired-after-readin-hook #'dired-k-no-revert)
+    )
+#+end_src
+
+** Поиск текста и файла по директории
+
+Функция поиска текста по текущей директории.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/search-in-directory ()
+    (interactive)
+    (counsel-rg))
+#+end_src
+
+Поиск файла по директории.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/find-file-in-directory ()
+    (interactive)
+    (counsel-file-jump))
+#+end_src
+
+Назначаем горячие клавиши для поиска.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+* Проекты (projects)
+
+** Установка и настройка работы с проектами (Projectile)
+
+Проекты определяют работу с файлами в пределах директории проекта.
+Рабочие пространства никак не конфликтуют с проектами - их удобно
+использовать совместно, например:
+- Создать рабочее пространство и переключать внутри него несколько проектов.
+- Под каждый проект создать свое рабочее пространство и переключаться между ними.
+- Для каждого проекта завести не только свое рабочее пространство, но и свой
+  отдельный фрейм.
+И так далее, как будет удобней для работы.
+
+Пакет =projectile= - крайне удобное средство для работы с проектами.
+Директории проектов распознаются по наличию в них поддиректории .git
+или файла .projectile. Среди прочего можно:
+- Открывать файлы проекта по частичному совпадению в имени и пути.
+- Тем же сособом можно переключаться между проектами.
+- Назначать на ходу команды компиляции, запуска и отладки проекта и
+  пользоваться ими.
+- В файле .projectile можно назначать параметры отдельно для каждого
+  проекта.
+
+Загрузим необходимые пакеты и сразу запретим Counsel предварительный
+показ буферов.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package projectile
+    :ensure t
+    :config
+    (projectile-load-known-projects))
+(use-package counsel-projectile
+    :ensure t)
+(use-package ibuffer-projectile
+    :ensure t
+    :config
+    (setq counsel-projectile-preview-buffers nil))
+(use-package ibuffer-vc
+    :ensure t)
+#+end_src
+
+Сам Projectile запоминать ранее открытые проекты не будет. Сделаем это за него.
+Сперва определим функцию для запоминания текущего проекта.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/projectile-save-current-project (dir)
+    (when (projectile-discover-projects-in-directory dir)
+        (projectile-save-known-projects)))
+#+end_src
+
+Теперь перехватим соответствующие hook'и, где проверим наличие проекта в текущей
+директории (живет в переменой default-directory).
+
+#+begin_src emacs-lisp :tangle yes
+(let ((hooks (list 'find-file-hook
+                   'dired-mode-hook
+                   'projectile-find-file-hook
+                   'projectile-find-dir-hook)))
+    (mapc (lambda (hook)
+              (add-hook hook
+                        (lambda ()
+                            (my/projectile-save-current-project default-directory))))
+          hooks))
+#+end_src
+
+Определим горячие клавиши для работы с проектами.
+
+#+begin_src emacs-lisp :tangle yes
+;; (my/leader-def nil 'override
+;;     "p" '(:ignore t :which-key "projects")
+;;     "P" '(:ignore t :which-key "projects-ws")
+;;     "p p" '(counsel-projectile-switch-project :which-key "Simple switch project")
+;;     "p f" '(counsel-projectile-find-file :which-key "Open file in project")
+;;     "p c" '(projectile-compile-project :which-key "Compile in project")
+;;     "p R" '(projectile-run-project :which-key "Run project")
+;;     "p T" '(projectile-test-project :which-key "Test project")
+;;     "/" '(counsel-projectile-rg :which-key "Search project"))
+#+end_src
+
+** Исключение файлов из поиска по проектам
+
+Здесь исключим всякий файловый мусор, дабы не мешался при поиске по проектам.
+Тут собраны в основном исключения для Python-проектов.
+
+#+begin_src emacs-lisp :tangle yes
+(setq grep-find-ignored-directories '("SCCS" "RCS" "CVS" "MCVS" ".src" ".svn" ".git" ".hg" ".bzr" "_MTN" "_darcs" "{arch}" "__pycache__" "build" "develop-eggs" "dist" "dist_local" "eggs" ".eggs" "sdist" ".pytest_cache" "env" "venv" "ENV" "env.bak" "venv.bak" ".mypy_cache")
+      helm-grep-ignored-directories '("SCCS/" "RCS/" "CVS/" "MCVS/" ".svn/" ".git/" ".hg/" ".bzr/" "_MTN/" "_darcs/" "{arch}/" ".gvfs/" "__pycache__/" "build/" "develop-eggs/" "dist/" "dist_local/" "eggs/" ".eggs/" "sdist/" ".pytest_cache/" "env/" "venv/" "ENV/" "env.bak/" "venv.bak/" ".mypy_cache/")
+      projectile-globally-ignored-directories '("~/.emacs.d/.local/" "~/.emacs.d/.local/" "~/.emacs.d/.local/" ".idea" ".vscode" ".ensime_cache" ".eunit" ".git" ".hg" ".fslckout" "_FOSSIL_" ".bzr" "_darcs" ".tox" ".svn" ".stack-work" ".ccls-cache" ".cache" ".clangd" "__pycache__" "build" "develop-eggs" "dist" "dist_local" "eggs" ".eggs" "sdist" ".pytest_cache" "env" "venv" "ENV" "env.bak" "venv.bak" ".mypy_cache")
+      projectile-globally-ignored-file-suffixes '(".elc" ".pyc" ".o" ".coverage" ".cache" ".ipynb_checkpoints" ".egg" ".pyo" ".pyd" ".cover" ".egg-info")
+      projectile-globally-ignored-files '(".DS_Store" "TAGS" "tags")
+)
+#+end_src
+
+И еще докинем исключения для списков ранее открытых файлов.
+
+#+begin_src emacs-lisp :tangle yes
+(setq recentf-exclude '("/\\(\\(\\(COMMIT\\|NOTES\\|PULLREQ\\|MERGEREQ\\|TAG\\)_EDIT\\|MERGE_\\|\\)MSG\\|\\(BRANCH\\|EDIT\\)_DESCRIPTION\\)\\'" "ssh:" "SSH:")
+      )
+#+end_src
+
+* Org
+
+** Фокус для help-буферов
+
+Настроим сначала фокус у окон с help-буферами.
+
+#+begin_src emacs-lisp :tangle yes
+(setq help-window-select t)
+#+end_src
+
+** Начальная инициализация всей org-кухни
+
+Некоторые мелочи, как само собой разумеющееся:
+- поддержка идентификаторов,
+- автоотступ по заголовкам,
+- вычисление org-babel блоков без вопросов
+и т.п..
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org
+    :ensure t
+    :config
+    (require 'org-id)
+    (add-hook 'org-mode-hook (lambda ()
+                                 (setq org-adapt-indentation t)))
+    (setq org-confirm-babel-evaluate nil)
+    (setq org-support-shift-select t))
+#+end_src
+
+** Разнообразная реакция на Enter (RET)
+
+При нажатии Enter попробуем узнать тип объекта под курсором и в
+зависимости от него вызвать соответствующую функцию.
+
+Определим функцию для определения типа объекта под курсором.  Функция
+возвращает информацию о типе org-объекта, которая может быть одним из
+символов:
+- button
+- citation, citation-reference
+- headline
+- clock
+- footnote-reference
+- footnote-definition
+- planning, timestamp
+- table, table-row
+- table-cell
+- babel-call
+- statistics-cookie
+- src-block, inline-src-block
+- latex-fragment, latex-environment
+- link
+- link-image
+- item
+- paragraph
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/object-type-at-point ()
+    (if (button-at (point))
+        'button
+        (let* ((context (org-element-context))
+               (type (org-element-type context)))
+            (while (and context
+                        (memq type '(verbatim
+                                     code
+                                     bold
+                                     italic
+                                     underline
+                                     strike-through
+                                     subscript
+                                     superscript)))
+                (setq context (org-element-property :parent context)
+                      type (org-element-type context)))
+            (my/org--correct-object-type type context))))
+
+(defun my/org--correct-object-type (type context)
+    (pcase type
+        (`link
+         (if (my/org--link-image-p context) 'link-image type))
+        (_
+         type)))
+
+(defun my/org--link-image-p (context)
+    (let* ((lineage (org-element-lineage context '(link) t))
+           (path (org-element-property :path lineage)))
+        (or (equal (org-element-property :type lineage) "img")
+            (and path (image-type-from-file-name path)))))
+#+end_src
+
+Теперь воткнем функцию-обработчик клавиши Enter. Содержимое
+обработчика будет пополняться по мере надобности.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/dwim-at-point (&optional arg)
+    (interactive "P")
+    (let ((type (my/object-type-at-point)))
+        (pcase type
+
+            (`link
+             (org-open-at-point arg))
+
+            (`link-image
+             (my/org-toggle-inline-images-in-subtree (org-element-at-point)))
+
+            ((or `latex-fragment `latex-environment)
+             (org-latex-preview arg))
+
+            (`item
+             (let ((match (and (org-at-item-checkbox-p)
+                               (match-string 1))))
+                 (org-toggle-checkbox (if (equal match "[ ]") '(16)))))  ; Set '-' to checkbox.
+            ((or `table `table-row)
+             (if (org-at-TBLFM-p)
+                 (org-table-calc-current-TBLFM)
+                 (ignore-errors
+                     (save-excursion
+                         (goto-char (org-element-property :contents-begin context))
+                         (org-call-with-arg 'org-table-recalculate (or arg t))))))
+
+            (`table-cell
+             (org-table-blank-field)
+             (org-table-recalculate arg)
+             (when (and (string-empty-p (string-trim (org-table-get-field)))
+                        (bound-and-true-p evil-local-mode))
+                 (evil-change-state 'insert)))
+
+            (_
+             (org-ctrl-c-ctrl-c arg))
+            )))
+
+(defun my/org-toggle-inline-images-in-subtree (object &optional refresh)
+    "Refresh inline image previews in the current heading/tree."
+    (let* ((beg (or (org-element-property :begin object)
+                    (if (org-before-first-heading-p)
+                        (save-excursion (point-min))
+                        (save-excursion (org-back-to-heading) (point)))))
+           (end (or (org-element-property :end object)
+                    (if (org-before-first-heading-p)
+                        (save-excursion (org-next-visible-heading 1) (point))
+                        (save-excursion (org-end-of-subtree) (point)))))
+           (overlays (cl-remove-if-not (lambda (ov)
+                                           (overlay-get ov 'org-image-overlay))
+                                       (ignore-errors (overlays-in beg end)))))
+        (dolist (ov overlays nil)
+            (delete-overlay ov)
+            (setq org-inline-image-overlays (delete ov org-inline-image-overlays)))
+        (when (or refresh (not overlays))
+            (org-display-inline-images t t beg end)
+            t)))
+#+end_src
+
+Определяем поведение клавиши Enter для evil.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Открытие org-ссылки в том же окне
+
+Открывать org-ссылку в другом окне оказалось очень неудобно. Сделаем
+открытие ссылки в том же окне, где и сам org-файл. Правило это
+задается в списке =org-link-frame-select=. Заменим
+вызов 'find-file-other-window на 'find-file.
+
+#+begin_src emacs-lisp :tangle yes
+(let* ((pair (assq 'file org-link-frame-setup)))
+    (setcdr pair 'find-file))
+#+end_src
+
+** Директория для org-файлов и прочей org-кухни
+
+If you use `org' and don't want your org files in the default location below, change `org-directory'. It must be set before org loads!
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-directory (concat (getenv "HOME") "/org"))
+#+end_src
+
+** Подгрузка остальных пакетов
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-cliplink
+	:ensure t)
+(use-package orgit
+	:ensure t)
+(use-package ox-clip
+	:ensure t)
+(use-package toc-org
+	:ensure t)
+(use-package restclient
+	:ensure t)
+(use-package company-restclient
+	:ensure t)
+(use-package know-your-http-well
+	:ensure t)
+#+end_src
+
+** Подгрузка пакетов для запуска скриптов в org-babel блоках
+   :PROPERTIES:
+   :ID:       c98e419e-f7e9-456d-b8f3-5037f0af775b
+   :END:
+
+Подгружаем пакеты для запуска скриптов в org-babel блоках.
+Поддержка языков прописывается в [[id:cb53569d-930e-42f1-925b-8c3b660f9c4d][разделе]] программирования.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ob-async
+    :ensure t)
+(use-package ob-go
+    :ensure t)
+(use-package ob-restclient
+    :ensure t)
+#+end_src
+
+** Перенос длинных строк по словам
+
+В org-mode удобно видеть перенос строк по словам.
+
+Чтобы сделать простой перенос строк, надо вызвать функцию
+=toggle-truncate-lines=, а чтобы перенос строк был по словам, надо
+добавить к ней вызов =toggle-word-wrap=.  Определим функцию, которая
+объединяет эти два вызова.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/set-word-wrap ()
+	(interactive)
+	(toggle-word-wrap)
+	(toggle-truncate-lines))
+#+end_src
+
+Теперь добавим обработчик для режима org-mode. Но надо быть
+осторожным: если где-то будет добавлен такой же обработчик на
+text-mode, то он отменит перенос строк. :)
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-mode-hook #'my/set-word-wrap)
+#+end_src
+
+** Поддержка org-календаря
+
+Определим клавиши навигации по org-календарю на привычные "hjkl".
+
+#+begin_src emacs-lisp :tangle yes
+(define-key org-read-date-minibuffer-local-map (kbd "M-b") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-day 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-f") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-day 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-p") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-week 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-n") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-week 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-B") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-month 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-F") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-month 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-P") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-year 1))))
+(define-key org-read-date-minibuffer-local-map (kbd "M-N") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-year 1))))
+#+end_src
+   
+** Карсивые метки списков
+
+Поставим красивые метки списков (bullets) посредством пакета =org-bullets=.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-bullets
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+end_src
+
+** Отступы в src-блоках
+
+Убираем бесячий автоотступ при сохранении src-блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-src-preserve-indentation t)
+#+end_src
+
+** Автоматическое схлопывание org-babel блоков
+
+Есть способ схлопывать все org-babel блоки на открытии org-файла.
+Делается это или глобально через установку переменной =org-hide-block-startup=,
+или через установку таких вот взамоисключающих заголовков в нужных org-файлах:
+
+: #+STARTUP: hideblocks
+: #+STARTUP: nohideblocks
+
+Для выборочного схлопывания/показа блоков напишем обрботчик даух новых аргументов:
+- =:hidden=  - блок показывается схлопнутым,
+- =:visible= - блок блок показывается развернутым.
+Эти аргументы можно применять в сочетании с командами выше (=nohideblocks=, =hideblocks=).
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/individual-visibility-source-blocks ()
+    "Fold blocks with argument :hidden in the current buffer."
+    (interactive)
+    (let ((block-types '(center-block comment-block dynamic-block example-block
+                         export-block quote-block special-block src-block verse-block)))
+        (org-block-map
+         (lambda ()
+             (let ((element (org-element-at-point)))
+                 (when (member (org-element-type element) block-types)
+                     (let ((arguments (cl-third (org-babel-get-src-block-info t))))
+                         (cond ((cl-assoc ':hidden arguments)
+                                (org-hide-block-toggle t nil element))
+                               ((cl-assoc ':visible arguments)
+                                (org-hide-block-toggle 'off nil element))))))))))
+#+end_src
+
+Обработчик, представленный выше, будет срабатывать при открытии org-документа.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-mode-hook #'my/individual-visibility-source-blocks)
+#+end_src
+
+Скрытие блоков слетает на применении org-cycle,
+поэтому запилим горячие клавиши для принудительного схлопывания/показа:
+- org-babel блоков с аргументами =:hidden= или =:visible=,
+- всех org-babel блоков в буфере.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Параметры экспортирования из org-mode
+
+Более полно про параметры экспорта можно прочитать на [[https://orgmode.org/manual/Export-Settings.html][странице документации]].
+
+Убираем TeX-овые над/подстрочные шрифты.
+Включить для отдельных документов можно опцией: "#+options: ^:t"
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-export-with-sub-superscripts nil)
+#+end_src
+
+Убираем автоматические номера из заголовков.
+Включить для отдельных документов можно опцией: "#+options: num:t"
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-export-with-section-numbers nil)
+#+end_src
+
+Соблюдаем все переносы строк, что и в исходном org-файле.
+Включить для отдельных документов можно опцией: "#+options: \n:t"
+(Пришел к тому, что надо убрать.)
+
+#+begin_example emacs-lisp :tangle yes
+(setq org-export-preserve-breaks t)
+#+end_example
+
+Убираем автора из экспорта.
+Включить для отдельных документов можно опцией: "#+options: author:t"
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-export-with-author nil)
+#+end_src
+
+Убираем оглавление путем указания ему неопределенного места.
+Включить для отдельных документов можно опцией: "#+options: toc:t"
+Подробнее смотри на [[https://orgmode.org/manual/Table-of-Contents.html][странице документации по оглавлению]].
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-export-with-toc nil)
+#+end_src
+
+** Экспорт в PDF через Latex
+
+Русский шрифт заработает совместно с установкой:
+
+#+begin_example bash
+# Ubuntu:
+sudo apt install texlive-lang-cyrillic
+# Arch Linux:
+sudo pacman -S texlive-langcyrillic
+sudo pacman -S texlive-latexextra
+#+end_example
+
+В настройки по-умолчанию (=org-latex-default-packages-alist=) уже
+прописаны следующие заголовки (файл [[./custom.el][custom.el]]):
+
+#+begin_quote
+#+latex_header: \usepackage[utf8x]{inputenc}
+#+latex_header: \usepackage[T2A]{fontenc}
+#+latex_header: \usepackage[russian,english]{babel}
+#+end_quote
+
+** Экспорт в Markdown
+
+Экспорт в markdown может быть сделан следующими функциями:
+- Встроенными в org:
+  + =org-md-export-as-markdown=,
+  + =org-md-export-to-markdown=.
+  Недостаток их в том, что таблицы экспортируются в HTML-виде.
+- Из пакета ox-gfm:
+  + =org-gfm-export-to-markdown=,
+  + =org-gfm-export-as-markdown=.
+  Здесь таблички имеют текстовый вид, но их верстка едет.
+
+Все же будем пользоваться пакетом =ox-gfm=.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ox-gfm
+    :ensure t)
+#+end_src
+
+** LaTeX preview. Формулы проямо в org-тексте
+
+Здесь не будет настроек, а только памятка, чтобы вспоминать, как этим
+пользоваться.
+
+Сперва требуется установить =dvipng= (я установил еще вдогонку
+=preview-latex-style=):
+#+begin_example bash
+# Ubuntu:
+sudo apt install dvipng preview-latex-style
+# Arch Linux: устанавливается вместе с пакетом texlive-bin.
+#+end_example
+
+Этого достаточно! Теперь можно вставлять прямо в org-текст TeX'овские
+штуки:
+
+| вторая степень          | $$x^2$$            |
+| корень из дискриминанта | $$\sqrt{b^2-4ac}$$ |
+
+Чтобы показать это надо или выделить текст с формулами, или навести
+курсор на нужную формулу, после чего вызвать функцию =(org-latex-preview)=
+(стандартные клавиши - =C-v C-x C-l= и просто =RET= для Doom).
+
+Чтобы формулы показывались сразу при открытии org-файла, нужно в
+заголовке startup указать значение =latexpreview=.
+
+При экспорте в LaTeX+PDF все формулы будут преобразованы в
+соответствующие изображения.
+
+И еще маленькое удобство: при экспорте во что угодно спецсимволы типа
+\lambda, \Sigma изображаются соответстущими символами греческого
+алфавита.
+
+** Копирование ссылки в буфер обмена
+
+Быстрое вытаскивание ссылки из org-текста. Ссылка копируется сразу в три регистра: `+', `*' и `"'.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-copy-link-url ()
+    (interactive)
+    (kill-new (org-element-property :raw-link (org-element-context)))
+    (let ((text (evil-get-register ?\")))
+        (evil-set-register ?+ text)
+        (evil-set-register ?* text)
+        (evil-set-register ?0 text)
+        (message text)))
+#+end_src
+
+Горячие клавиши для копирования ссылки.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Преобразование URL в ссылку с именем задачи или файла
+
+Часто в org-документах перевожу URL задач из Jira типа:
+: https://....ru/jira/TASK-123
+в ссылки, подобные этой:
+: [[https://....ru/jira/TASK-123][TASK-123]]
+
+Чтобы сократить время на редактирование таких ссылок, сделаем функцию.
+Она принимает контекст org-элемента под курсором и в случае, если это URL,
+создает ссылку, как показано выше.
+
+Функция делает то же самое и для ссылок на файлы.
+
+Параметром является ссылка на функцию преобразования сырой ссылки. Нужно это для
+создания ссылки на открытие файла системой.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/make-task-link--common (&optional raw-link-converter)
+    (let* ((element (org-element-context))
+           (type (org-element-property :type element))
+           (raw-link (org-element-property :raw-link element))
+           (link (if raw-link-converter
+                         (funcall raw-link-converter type raw-link)
+                     raw-link))
+           (is-url (org-url-p raw-link)))
+        (when (or is-url
+                  (equal type "file"))
+            (let* ((start (org-element-property :begin element))
+                   (end (org-element-property :end element))
+                   (path (org-element-property :path element))
+                   (parts (seq-filter (lambda (str)
+                                          (not (string-empty-p str)))
+                                      (split-string path "/")))
+                   (task-name (car (last parts))))
+                (delete-region start end)
+                (insert (concat "[[" link "][" task-name "]]" (if is-url " " "")))
+                (goto-char start)))))
+#+end_src
+
+Для файлов может быть полезна ссылка сразу на его открытие в системе (gio open).
+Напишем функцию преобразования пути файла в его открытие.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/make-link-for-call--convert-file-raw-link-for-call (type raw-link)
+    (if (equal type "file")
+            (concat "elisp:(call-process \"gio\" nil 0 nil \"open\" \"" raw-link "\")")
+        raw-link))
+#+end_src
+
+Пара конечных функций для горячих клавиш ("ссылка" и "открытие файла").
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/make-task-link ()
+    (interactive)
+    (my/make-task-link--common))
+
+(defun my/make-link-for-call ()
+    (interactive)
+    (my/make-task-link--common #'my/make-link-for-call--convert-file-raw-link-for-call))
+#+end_src
+
+Добавляем горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Показ картинок-результатов выполнения org-babel блоков
+
+Картинки отрисовываются сразу после загрузки org-файла.
+Вручную этим можно управлять такими инструкциями:
+: #+STARTUP: inlineimages
+: #+STARTUP: noinlineimages
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-startup-with-inline-images t)
+#+end_src
+
+А также сразу после выполнения org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
+#+end_src
+
+** Слайды и презентации
+
+Для показа интерактивных презентаций воспользуемся пакетом
+=org-tree-slide=.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-tree-slide
+	:ensure t)
+#+end_src
+
+Однако, в чистом виде слайды выглядят некрасиво. Будем облагораживать
+вид презентаций вручную.
+
+Определим функции, которые скрывают и показывают операторные скобки
+`#+begin_...' - `#+end_...' через изменение цвета текста. Цвет
+запоминается на время в стек и из него же достается для восстановления
+исходного состояния.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/begin:end-block-delimiters nil)
+
+(defun my/hide-begin:end-block-delimiters ()
+    (let ((begin-color (face-foreground 'org-block-begin-line nil 'default))
+          (end-color (face-foreground 'org-block-end-line nil 'default)))
+        (setq my/begin:end-block-delimiters
+              (cons `(,begin-color . ,end-color) my/begin:end-block-delimiters))
+        (set-face-attribute 'org-block-begin-line nil
+                            :foreground (face-background 'org-block-begin-line nil 'default))
+        (set-face-attribute 'org-block-end-line nil
+                            :foreground (face-background 'org-block-end-line nil 'default))))
+
+(defun my/show-begin:end-block-delimiters ()
+    (let ((colors (car my/begin:end-block-delimiters)))
+        (setq my/begin:end-block-delimiters (cdr my/begin:end-block-delimiters))
+        (set-face-attribute 'org-block-begin-line nil :foreground (or (car colors) 'unspecified))
+        (set-face-attribute 'org-block-end-line nil :foreground (or (cdr colors) 'unspecifie))))
+#+end_src
+
+Теперь определим функции, которые:
+- отцентрируют текст (пакет =centered-window-mode=),
+- скроют отвлекающие от слайда внимание элементы.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/slide-view-on ()
+    "Prepare window for org-tree-slide-mode."
+    (interactive)
+    (if (eq major-mode 'org-mode)
+            (progn
+                (my/hide-begin:end-block-delimiters)
+                ;; (doom-disable-line-numbers-h)
+				(my/set-word-wrap)
+                (my/hide-header-line)
+                (highlight-indent-guides-mode -1)
+                (centered-window-mode 1)
+                (org-tree-slide-mode 1))
+        (message "For org-mode only!")))
+
+(defun my/slide-view-off ()
+    "Returt window state from org-tree-slide-mode."
+    (interactive)
+    (if (eq major-mode 'org-mode)
+            (progn
+                (centered-window-mode -1)
+                (highlight-indent-guides-mode 1)
+                (my/show-header-line)
+                (my/show-begin:end-block-delimiters)
+                ;; (doom-enable-line-numbers-h)
+				(my/set-word-wrap)
+                (org-tree-slide-mode -1))
+        (message "For org-mode only!")))
+#+end_src
+
+Сделаем переключатель режима презентации и обычного режима редактирования.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/slide-view-state nil)
+
+(defun my/slide-view-toggle ()
+    "Toggle window state for org-tree-slide-mode."
+    (interactive)
+    (setq my/slide-view-state (not my/slide-view-state))
+    (if my/slide-view-state
+            (my/slide-view-on)
+        (my/slide-view-off)))
+#+end_src
+
+Повесим переключение в режим показа презентации на горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+А это из документации к org-tree-slide, листаем слайды.
+
+#+begin_src emacs-lisp :tangle yes
+(with-eval-after-load "org-tree-slide"
+    (define-key org-tree-slide-mode-map (kbd "<f9>") 'org-tree-slide-move-previous-tree)
+    (define-key org-tree-slide-mode-map (kbd "<f10>") 'org-tree-slide-move-next-tree))
+#+end_src
+
+** Новый буфер в режиме org-mode
+
+Очень часто открываю новый буфер, после чего устанавливаюему режим org-mode. Автоматизируем эти действия.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/open-new-buffer-in-org-mode ()
+    (interactive)
+    (let ((buffer (generate-new-buffer "*new Org-mode*")))
+        (set-window-buffer nil buffer)
+        (with-current-buffer buffer
+            (org-mode))))
+#+end_src
+
+И горячие клавиши к созданию нового org-буфера.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Agenda
+
+Настраиваем Агенду.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'org-agenda)
+(setq-default org-agenda-deadline-faces '((1.001 . error)
+                                          (1.0 . org-warning)
+                                          (0.5 . org-upcoming-deadline)
+                                          (0.0 . org-upcoming-distant-deadline))
+              org-agenda-window-setup 'current-window
+              org-agenda-skip-unavailable-files t
+              org-agenda-span 'month
+              org-agenda-start-on-weekday nil
+              org-agenda-start-day "-3d"
+              org-agenda-inhibit-startup t)
+#+end_src
+
+** Agenda. Статусы задач
+
+Здесь определяются нужные мне статусы задач.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/org-todo-keywords
+      '((sequence "TODO(t)" "IN-WORK(w)" "PAUSE(p)" "|" "DONE(d)" "CANCELED(c)" "SOMETIME(s)")))
+(setq org-todo-keywords my/org-todo-keywords)
+(defun my/set-org-todo-keywords ()  ; Принудительное восстановление статусов задач.
+    (interactive)
+    (setq org-todo-keywords my/org-todo-keywords))
+#+end_src
+
+Навесим теперь статусы, куда сработают.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-agenda-mode-hook #'my/set-org-todo-keywords)
+(my/set-org-todo-keywords)
+#+end_src
+
+
+* Инструменты внешние
+
+** Treemacs
+
+Дерево проектов. Полезная штука для анализа незнакомого кода. Немного глючит, но
+со временем выравнивается.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package treemacs
+    :ensure t)
+(use-package treemacs-projectile
+    :ensure t)
+#+end_src
+
+Горячие клавиши для вызова дерева проектов.  Добавим переход в окно
+treemacs при показе текущего файла в дереве проекта.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/treemacs-find-file-and-select-tree-window ()
+    (interactive)
+    (treemacs-find-file)
+    (treemacs-select-window))
+
+;; ...
+#+end_src
+
+Вызов меню для treemacs.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Magit
+
+Один из самых лучших и удобных клиентов для Git.
+
+Загрузим необходимые пакеты и определим некоторые базовые клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package magit
+    :ensure t
+    :config
+    ;; Define some keys:
+    (setq magit-diff-refine-hunk t))
+(use-package magit-gitflow
+    :ensure t)
+(use-package magit-popup
+    :ensure t)
+(use-package magit-todos
+    :ensure t)
+#+end_src
+
+Запилим горячие клавиши на полезные операции. Итак:
+
+Горячие клавиши для лога текущей ветки.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Горячие клавиши для лога файла в активном буфере.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Горячие клавиши для просмотра логов от git-команд.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Горячие клавиши для выкачки информации по всем веткам (magit-fetch-all).
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Блеймер (подробный)
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Не блеймер и не Magit, но смысл тот же. Показываем информацию по
+каждой строке в отдельном буфере (=vc-annotate=).
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Подсветка разницы с HEAD в каждой строке
+
+Метки строк по состоянию в Git добавим через пакет =Git-gutter=.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package git-gutter-fringe
+	  :ensure t
+	  :config
+	  (global-git-gutter-mode t)
+	  (setq git-gutter:update-interval 1))
+#+end_src
+
+** Blamer (смотрелка заголовков последних коммитов в коде)
+
+Пример скопирован [[https://github.com/Artawower/blamer.el][отсюда]]. Запомню его тут, чтобы долго не искать.
+
+#+begin_example emacs-lisp :tangle yes
+(use-package blamer
+  :bind (("s-i" . blamer-show-commit-info))
+  :defer 20
+  :custom
+  (blamer-idle-time 0.3)
+  (blamer-min-offset 70)
+  :custom-face
+  (blamer-face ((t :foreground "#7a88cf"
+                    :background nil
+                    :height 140
+                    :italic t)))
+  :config
+  (global-blamer-mode 1))
+#+end_example
+
+Теперь сделаем свою конфигурацию.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package blamer
+    :ensure t
+    :config
+    (global-blamer-mode -1))
+#+end_src
+
+Посадим на горячие клавиши переключение blamer-mode.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Календарь, как его представление
+
+Включение модуля "calendar" позволяет смотреть свои дела из Agenda в виде календаря.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package calfw
+	:ensure t
+	:config
+	(setq cfw:face-item-separator-color nil
+		  cfw:render-line-breaker 'cfw:render-line-breaker-none
+		  cfw:fchar-junction ?╋
+		  cfw:fchar-vertical-line ?┃
+		  cfw:fchar-horizontal-line ?━
+		  cfw:fchar-left-junction ?┣
+		  cfw:fchar-right-junction ?┫
+		  cfw:fchar-top-junction ?┯
+		  cfw:fchar-top-left-corner ?┏
+		  cfw:fchar-top-right-corner ?┓))
+
+(use-package calfw-org
+	:ensure t)
+(use-package calfw-cal
+	:ensure t
+	:commands (cfw:cal-create-source))
+
+(use-package calfw-ical
+	:ensure t
+	:commands (cfw:ical-create-source))
+
+;; (use-package org-gcal
+;; 	:defer t)
+#+end_src
+
+Отключим показ ненужных праздников:
+
+#+begin_src emacs-lisp :tangle yes
+(setq cfw:display-calendar-holidays nil)
+#+end_src
+
+Ниже запилим сочетания клавиш.
+
+Вызов буфера с cfw-календарем:
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+Вызов Agenda для выбранного дня:
+
+#+begin_src emacs-lisp :tangle yes
+(define-key cfw:calendar-mode-map "d" #'cfw:org-open-agenda-day)
+#+end_src
+
+* Программирование
+
+** Подсказки компилятору для обработки org-babel блоков
+   :PROPERTIES:
+   :ID:       cb53569d-930e-42f1-925b-8c3b660f9c4d
+   :END:
+
+Подскажем редактору, как обрабатывать org-babel блоки.
+Здесь дружим org-babel со всеми установленными языками.
+
+(!) Но прежде чем дружить блоки с языками, надо загрузить сответствующую
+поддержку ob-блоков. Подгрузку смотри в [[id:c98e419e-f7e9-456d-b8f3-5037f0af775b][разделе]] главы Org.
+
+#+begin_src emacs-lisp :tangle yes
+(org-babel-do-load-languages
+   'org-babel-load-languages
+   '((shell . t)
+     (plantuml . t)
+     (python . t)))
+#+end_src
+
+** Навигация по ошибкам
+
+Запилим горячие клавиши для перемещения по ошибкам на основе flycheck.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Markdown
+
+Устанавливаем пакеты для поддержки markdown.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package markdown-toc
+    :ensure t)
+#+end_src
+
+Поскольку в markdown пробелы в конце строки имеют значение, то
+визуализируем их.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'markdown-mode-hook #'whitespace-mode)
+#+end_src
+
+Для markdown-файлов нужен просмотр. Сделаем его через утилиту
+=retext=. Утилита хороша тем, что в режиме просмотра тут же
+перерисовывает содержимое при изменениях в исходном файле. Это
+особенно удобно при работе в плиточных оконных менеджерах.
+
+Устанавливаем утилиту =retext= так:
+
+#+begin_example bash
+sudo apt install retext
+#+end_example
+
+Пишем код для предпросмотра markdown-файлов.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/markdown-preview-file ()
+    "Preview a markdown file by `retext' utilite."
+    (interactive)
+    (start-process "Markdown-Preview-by-Retext"
+                   "*markdown-retext-preview*"
+                   "retext" "--preview" (buffer-file-name)))
+                   ;; "retext" "--preview" (shell-quote-argument (buffer-file-name))))  ; Оставлено для памяти.
+#+end_src
+
+Вешаем предпросмотр на горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+** Yaml
+
+Подсветка yaml-файлов.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package yaml-mode
+    :ensure t)
+#+end_src
+
+** Json
+
+#+begin_src emacs-lisp :tangle yes
+(use-package json-mode
+    :ensure t)
+#+end_src   
+
+** Make
+
+#+begin_src emacs-lisp :tangle yes
+(require 'make-mode)
+#+end_src
+
+** Vimrc
+
+#+begin_src emacs-lisp :tangle yes
+(use-package vimrc-mode
+    :ensure t)
+#+end_src
+
+** PlantUML
+
+Загружаем пакеты для поддержки Plantuml.
+По-умолчанию на выходе стоит "svg"-файл (есть еще "png" и "txt").
+Это неудобно для темных тем, поскольку все буквы идут черным цветом.
+Перейдем на "png" по-умолчанию.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package plantuml-mode
+    :ensure t
+    :init
+    (let ((jar-path (concat user-emacs-directory "/.local/plantuml.jar")))
+        (setq plantuml-jar-path jar-path
+              org-plantuml-jar-path jar-path))
+    :config
+    (setq plantuml-default-exec-mode
+          (cond ((file-exists-p plantuml-jar-path) 'jar)
+                ((executable-find "plantuml") 'executable)
+                (plantuml-default-exec-mode)))
+    (plantuml-set-output-type "png"))
+#+end_src
+
+Подгрузим автоматом jar-файл.
+
+#+begin_src emacs-lisp :tangle yes
+(unless (file-exists-p plantuml-jar-path)
+    (plantuml-download-jar))
+#+end_src
+
+Горячая клавиша для автодополнения.
+
+#+begin_src emacs-lisp :tangle yes
+;; ...
+#+end_src
+
+UTF-8 - наше всё! :)
+
+#+begin_src emacs-lisp :tangle yes
+(add-to-list 'org-babel-default-header-args:plantuml
+             '(:cmdline . "-charset utf-8"))
+#+end_src
+
+Настроим параметр :file для plantuml-блоков по-умолчанию. Если параметр
+:file не указан, то создаем временный файл с картинкой (для этого есть
+функция =org-babel-temp-file=). Это нужно для рисования схем и
+картинок без лишних телодвижений.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-babel-execute:plantuml (func &rest args)
+    (let* ((body (car args))
+           (params (cadr args))
+           (out-file-p (cdr (assq :file params)))
+           (out-file (or out-file-p
+                         (org-babel-temp-file "plantuml-" ".png")))
+           (new-params (if out-file-p
+                           params
+                           (cons `(:file . ,out-file) params)))
+           (result (apply func (list body new-params))))
+        (if out-file-p
+            result
+            out-file)))
+
+(advice-add #'org-babel-execute:plantuml
+            :around #'my/org-babel-execute:plantuml)
+#+end_src
+
+** Python
+
+Установим основные пакеты. Какие-то будут впрок.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package python
+    :ensure t)
+(use-package python-mode
+    :ensure t)
+#+end_src

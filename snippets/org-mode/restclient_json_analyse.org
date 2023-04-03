@@ -1,0 +1,17 @@
+# -*- mode: snippet -*-
+# name: Rest Client Json with Analysation
+# key: restclient_json_analyse
+# --
+#+name: ${1:json_result}
+#+begin_src restclient :results value :wrap export json :cache yes
+$0
+#+end_src
+
+#+begin_src python :var json_result=$1 :results pp :wrap export js
+def vals(container, *fields):
+    return {field: container[field] for field in fields}
+
+import json
+data = json.loads(json_result)
+return data
+#+end_src

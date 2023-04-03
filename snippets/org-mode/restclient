@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Rest Client
+# key: restclient_
+# --
+#+begin_src restclient
+$0
+#+end_src

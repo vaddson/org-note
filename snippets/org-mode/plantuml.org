@@ -1,0 +1,14 @@
+# -*- mode: snippet -*-
+# name: plantuml
+# key: plantuml_
+# --
+#+begin_src plantuml
+@start${1:uml}
+skinparam shadowing false
+'skinparam dpi 200
+'left to right direction
+
+$0
+
+@end${2:uml}
+#+end_src

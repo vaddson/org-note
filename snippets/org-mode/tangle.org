@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Tangle
+# key: tangle_
+# --
+#+begin_src ${1:language} :tangle ${2:filename} :noweb yes
+$0
+#+end_src

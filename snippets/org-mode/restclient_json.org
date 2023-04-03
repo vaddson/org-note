@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: Rest Client Json
+# key: restclient_json_
+# --
+#+begin_src restclient :results value :wrap export json
+$0
+#+end_src
