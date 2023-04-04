@@ -20,7 +20,6 @@
 ;;; -*- lexical-binding: t -*-
 #+end_src
   
-
 * Отладка
 
 Создаем буфер =*my/log-buffer*= и пишем в него логи.
@@ -158,7 +157,6 @@ email clients, file templates and snippets."
 (setq ring-bell-function 'ignore)
 #+end_src
 
-
 * Внешний вид UI и GUI
 
 ** Мигание курсора
@@ -177,7 +175,7 @@ email clients, file templates and snippets."
 (setq mode-line-position (list "(%l,%C)"))
 #+end_src
 
-** COMMENT Показ объекта внутри которого находится курсор (header-line)
+** Показ объекта внутри которого находится курсор (header-line)
 
 Часто бывает нужно посмотреть, в каком объекте находится курсор. Это
 может быть функция из программного кода или заголовок в org-mode или
@@ -216,10 +214,10 @@ Type [M-x list-faces-display] to see all colors.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package rainbow-mode
-	:ensure t
-	:config
-	(define-globalized-minor-mode global-rainbow-mode rainbow-mode
-		(lambda () (rainbow-mode 1))))
+    :ensure t
+    :config
+    (define-globalized-minor-mode global-rainbow-mode rainbow-mode
+        (lambda () (rainbow-mode 1))))
 #+end_src
 
 Можно выставить подсветку цветов везде по-умолчанию через вызов
@@ -291,8 +289,6 @@ Type [M-x list-faces-display] to see all colors.
 Совместимость с привычными клавишами копирования, вставки и прочего.
 
 #+begin_src emacs-lisp :tangle yes
-;; (use-package org-cua-dwim
-;;     :ensure t)
 (cua-mode t)
 (setq org-support-shift-select t)
 (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
@@ -307,8 +303,8 @@ Type [M-x list-faces-display] to see all colors.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package undo-tree
-	:ensure t
-	:config
+    :ensure t
+    :config
     (setq undo-tree-auto-save-history nil))
 #+end_src
 
@@ -380,6 +376,13 @@ Type [M-x list-faces-display] to see all colors.
     :ensure t)
 #+end_src
 
+Горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-'") #'avy-goto-char-2)
+(global-set-key (kbd "C-\"") #'avy-goto-char-timer)
+#+end_src
+
 ** Нумерация строк
 
 Зададим в переменной нумерацию строк по-умолчанию.
@@ -407,12 +410,12 @@ Type [M-x list-faces-display] to see all colors.
 (defun my/display-next-line-numbers ()
     (interactive)
     (pcase display-line-numbers
-        (`relative
-         (setq-local display-line-numbers 'value))
         (`value
+         (setq-local display-line-numbers 'relative))
+        (`relative
          (setq-local display-line-numbers nil))
         (_
-         (setq-local display-line-numbers 'relative))))
+         (setq-local display-line-numbers 'value))))
 #+end_src
 
 Теперь покажем номера строк для текстовых и программных режимов.
@@ -426,7 +429,10 @@ Type [M-x list-faces-display] to see all colors.
 Горячие клавиши смены показа нумерации строк.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x x l") #'my/display-next-line-numbers)
+(global-set-key (kbd "C-x x L") (lambda ()
+                                    (interactive)
+                                    (my/display-line-numbers 1)))
 #+end_src
 
 ** Wgrep. Отслеживаем не сохраненное во всех буферах
@@ -448,7 +454,7 @@ Type [M-x list-faces-display] to see all colors.
 (setq-default standart-indent 4) ;; стандартная ширина отступа - 4 пробельных символа
 (setq-default plantuml-indent-level 4)
 (setq-default lisp-body-indent 4) ;; сдвигать lisp-выражения на 4 пробельных символа
-(setq lisp-indent-function 'common-lisp-indent-function)
+;; (setq lisp-indent-function 'common-lisp-indent-function)
 #+end_src
 
 ** Переключение раскладки клавиатуры
@@ -482,7 +488,9 @@ Type [M-x list-faces-display] to see all colors.
 Назначим горячие клавиши для схлопывания текста.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key yafolding-mode-map (kbd "C-c y RET") #'yafolding-toggle-element)
+(define-key yafolding-mode-map (kbd "C-c y p") #'yafolding-hide-parent-element)
+(define-key yafolding-mode-map (kbd "C-c y f") #'yafolding-toggle-all)
 #+end_src
 
 ** Подсветка отступов
@@ -547,6 +555,14 @@ Type [M-x list-faces-display] to see all colors.
 
 Подсказки по исправлению слова зашиты на функцию =ispell-word=.
 
+#+begin_src emacs-lisp :tangle yes
+(require 'flyspell)
+(define-key flyspell-mode-map (kbd "C-,") nil)
+(define-key flyspell-mode-map (kbd "C-;") nil)
+(define-key flyspell-mode-map (kbd "C-c s n") #'flyspell-goto-next-error)
+(define-key flyspell-mode-map (kbd "C-c s =") #'ispell-word)
+#+end_src
+
 ** Сниппеты Yasnippet
 
 Сниппет в Emacs - это заранее подготовленный кусок текста, который
@@ -573,7 +589,7 @@ Type [M-x list-faces-display] to see all colors.
 Горячие клавиши для выбора сниппета по его названию.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key yas-minor-mode-map (kbd "C-c i s") #'yas-insert-snippet)
 #+end_src
 
 ** Закладки
@@ -585,7 +601,7 @@ Type [M-x list-faces-display] to see all colors.
 Назначим дополнительные горячие клавиши с лидером.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x r v") #'bookmark-save)
 #+end_src
    
 * Подсказки, выпадашки, автодополнения
@@ -611,7 +627,7 @@ Type [M-x list-faces-display] to see all colors.
 зафиксировать клавишами =Ctrl-c Ctrl-o=.)
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "M-s '") #'ivy-resume)
 #+end_src
 
 ** Подсказки на клавиши
@@ -634,7 +650,6 @@ Type [M-x list-faces-display] to see all colors.
 #+begin_src emacs-lisp :tangle yes
 (use-package helpful
     :ensure t)
-;; ...
 #+end_src
 
 ** Counsel. Меню вызова функции с более полным описанием
@@ -645,11 +660,7 @@ Type [M-x list-faces-display] to see all colors.
 (use-package counsel
     :ensure t)
 (use-package counsel-projectile
-    :ensure t
-    ;; :config
-    ;; (counsel-projectile-mode 1)
-    ;; (ivy-set-display-transformer #'counsel-projectile-find-file nil)
-    )
+    :ensure t)
 #+end_src
 
 При поиске текста по проекту через =counsel-projectile-rg= нужно
@@ -679,28 +690,16 @@ Type [M-x list-faces-display] to see all colors.
 
 #+end_src
 
-Подменим стандартные функции на их counsel-аналог.
-Так, как это закомментарено ниже, не будет работать.
-Позже допилю другое решение.
-
-# #+begin_src emacs-lisp :tangle yes
-# (advice-add #'find-library :override #'counsel-find-library)
-# (advice-add #'info-lookup-symbol :override #'counsel-info-lookup-symbol)
-# (advice-add #'locate :override #'counsel-locate)
-# (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-# (global-set-key (kbd "C-c g") 'counsel-git)
-# (global-set-key (kbd "C-c j") 'counsel-git-grep)
-# (global-set-key (kbd "C-c k") 'counsel-ag)
-# (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-# #+end_src
-
 Определяем действия =counsel= на горячие клавиши.
 
 #+begin_src emacs-lisp :tangle yes
 (setq suggest-key-bindings t)
 (global-set-key (kbd "M-x") 'counsel-M-x)
-(global-set-key (kbd "C-r") #'counsel-minibuffer-history)
-;; ...
+(global-set-key (kbd "C-h f") #'counsel-describe-function)
+(global-set-key (kbd "C-h v") #'counsel-describe-variable)
+(global-set-key (kbd "C-h o") #'counsel-describe-symbol)
+(global-set-key (kbd "C-h t") #'counsel-load-theme)
+(global-set-key (kbd "C-h a") #'counsel-apropos)
 #+end_src
 
 ** Company. Автодополнения
@@ -877,7 +876,8 @@ Type [M-x list-faces-display] to see all colors.
 Горячие клавиши для вызова поиска swiper.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-s") #'swiper)
+(global-set-key (kbd "M-s M-s") #'swiper-isearch-thing-at-point)
 #+end_src
 
 ** Символ технического пробела `_'
@@ -918,19 +918,19 @@ Imenu - дает не только удобный способ навигаци�
 (setq org-imenu-depth 8)
 #+end_src
 
-Определим горячие клавиши для навигации через imenu.
-
-#+begin_src emacs-lisp :tangle yes
-;; ...
-#+end_src
-
 Установим дополнтельный пакет, который в отдельном окне отображает
 оглавление.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package imenu-list
     :ensure t)
-;; ...
+#+end_src
+
+Определим горячие клавиши для навигации через imenu.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c s i") #'counsel-imenu)
+(global-set-key (kbd "C-c s I") #'imenu-list-smart-toggle)
 #+end_src
 
 * Работа с окнами
@@ -995,49 +995,10 @@ Imenu - дает не только удобный способ навигаци�
                   (ibuffer-do-sort-by-alphabetic))))
 #+end_src
 
-** COMMENT Centaur tabs. Каждый файл в своей вкладке
+Назначим горячие клавиши.
 
 #+begin_src emacs-lisp :tangle yes
-(use-package centaur-tabs
-    :ensure t
-    :demand
-    :init
-    ;; (setq centaur-tabs-style "bar")
-    (setq centaur-tabs-set-icons t)
-    (setq centaur-tabs-height 32)
-    (setq centaur-tabs-set-icons t
-          centaur-tabs-gray-out-icons 'buffer
-          centaur-tabs-set-bar 'left
-          centaur-tabs-set-modified-marker t
-          centaur-tabs-close-button "✕"
-          centaur-tabs-modified-marker "•"
-          ;; Scrolling (with the mouse wheel) past the end of the tab list
-          ;; replaces the tab list with that of another Doom workspace. This
-          ;; prevents that.
-          centaur-tabs-cycle-scope 'tabs)
-    (defun centaur-tabs-buffer-groups ()
-        "Group all."
-        "Emacs")
-    :config
-    (centaur-tabs-mode t)
-    (centaur-tabs-headline-match)
-    :bind
-    ("C-<prior>" . centaur-tabs-backward)
-    ("C-<next>" . centaur-tabs-forward))
-
-;; (use-package! centaur-tabs
-;;               :hook (doom-first-file . centaur-tabs-mode)
-;;               :init
-;;               (setq centaur-tabs-set-icons t
-;;                     centaur-tabs-gray-out-icons 'buffer
-;;                     centaur-tabs-set-bar 'left
-;;                     centaur-tabs-set-modified-marker t
-;;                     centaur-tabs-close-button "✕"
-;;                     centaur-tabs-modified-marker "•"
-;;                     ;; Scrolling (with the mouse wheel) past the end of the tab list
-;;                     ;; replaces the tab list with that of another Doom workspace. This
-;;                     ;; prevents that.
-;;                     centaur-tabs-cycle-scope 'tabs))
+(global-set-key (kbd "C-x C-b") #'ibuffer)
 #+end_src
 
 * Работа с файлами
@@ -1057,7 +1018,6 @@ Dired:
 #+begin_src emacs-lisp :tangle yes
 (setq global-auto-revert-non-file-buffers t)
 #+end_src
-
 
 ** Dired. Настройка файлового менеджера
 
@@ -1117,7 +1077,8 @@ dired-окне. Для этого надо установить соответс
 Назначаем горячие клавиши для поиска.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "M-s d") #'my/search-in-directory)
+(global-set-key (kbd "C-x C-S-f") #'my/find-file-in-directory)
 #+end_src
 
 ** Графический диалог открытия файла
@@ -1163,6 +1124,7 @@ dired-окне. Для этого надо установить соответс
 (use-package projectile
     :ensure t
     :config
+    (projectile-mode +1)
     (projectile-load-known-projects))
 (use-package counsel-projectile
     :ensure t)
@@ -1201,15 +1163,12 @@ dired-окне. Для этого надо установить соответс
 Определим горячие клавиши для работы с проектами.
 
 #+begin_src emacs-lisp :tangle yes
-;; (my/leader-def nil 'override
-;;     "p" '(:ignore t :which-key "projects")
-;;     "P" '(:ignore t :which-key "projects-ws")
-;;     "p p" '(counsel-projectile-switch-project :which-key "Simple switch project")
-;;     "p f" '(counsel-projectile-find-file :which-key "Open file in project")
-;;     "p c" '(projectile-compile-project :which-key "Compile in project")
-;;     "p R" '(projectile-run-project :which-key "Run project")
-;;     "p T" '(projectile-test-project :which-key "Test project")
-;;     "/" '(counsel-projectile-rg :which-key "Search project"))
+(define-key projectile-mode-map (kbd "C-c p p") #'counsel-projectile-switch-project)
+(define-key projectile-mode-map (kbd "C-c p f") #'counsel-projectile-find-file)
+(define-key projectile-mode-map (kbd "C-c p c") #'projectile-compile-project)
+(define-key projectile-mode-map (kbd "C-c p R") #'projectile-run-project)
+(define-key projectile-mode-map (kbd "C-c p T") #'projectile-test-project)
+(define-key projectile-mode-map (kbd "C-c p /") #'counsel-projectile-rg)
 #+end_src
 
 ** Исключение файлов из поиска по проектам
@@ -1262,10 +1221,10 @@ dired-окне. Для этого надо установить соответс
     (setq org-support-shift-select t))
 #+end_src
 
-** Разнообразная реакция на Enter (RET)
+** Разнообразная реакция на Ctrl-C Ctrl-C
 
-При нажатии Enter попробуем узнать тип объекта под курсором и в
-зависимости от него вызвать соответствующую функцию.
+При нажатии Ctrl-C Ctrl-C попробуем узнать тип объекта под курсором и
+в зависимости от него вызвать соответствующую функцию.
 
 Определим функцию для определения типа объекта под курсором.  Функция
 возвращает информацию о типе org-объекта, которая может быть одним из
@@ -1351,12 +1310,12 @@ dired-окне. Для этого надо установить соответс
                          (goto-char (org-element-property :contents-begin context))
                          (org-call-with-arg 'org-table-recalculate (or arg t))))))
 
-            (`table-cell
-             (org-table-blank-field)
-             (org-table-recalculate arg)
-             (when (and (string-empty-p (string-trim (org-table-get-field)))
-                        (bound-and-true-p evil-local-mode))
-                 (evil-change-state 'insert)))
+            ;; (`table-cell
+            ;;  (org-table-blank-field)
+            ;;  (org-table-recalculate arg)
+            ;;  (when (and (string-empty-p (string-trim (org-table-get-field)))
+            ;;             (bound-and-true-p evil-local-mode))
+            ;;      (evil-change-state 'insert)))
 
             (_
              (org-ctrl-c-ctrl-c arg))
@@ -1386,7 +1345,7 @@ dired-окне. Для этого надо установить соответс
 Определяем поведение клавиши Enter для evil.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key org-mode-map (kbd "C-c C-c") #'my/dwim-at-point)
 #+end_src
 
 ** Открытие org-ссылки в том же окне
@@ -1469,21 +1428,8 @@ text-mode, то он отменит перенос строк. :)
 (add-hook 'org-mode-hook #'my/set-word-wrap)
 #+end_src
 
-** Поддержка org-календаря
+Для переключения переноса строк используются клавиши =Ctrl-x x t=.
 
-Определим клавиши навигации по org-календарю на привычные "hjkl".
-
-#+begin_src emacs-lisp :tangle yes
-(define-key org-read-date-minibuffer-local-map (kbd "M-b") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-day 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-f") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-day 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-p") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-week 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-n") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-week 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-B") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-month 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-F") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-month 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-P") (lambda () (interactive) (org-eval-in-calendar '(calendar-backward-year 1))))
-(define-key org-read-date-minibuffer-local-map (kbd "M-N") (lambda () (interactive) (org-eval-in-calendar '(calendar-forward-year 1))))
-#+end_src
-   
 ** Карсивые метки списков
 
 Поставим красивые метки списков (bullets) посредством пакета =org-bullets=.
@@ -1546,7 +1492,8 @@ text-mode, то он отменит перенос строк. :)
 - всех org-babel блоков в буфере.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key org-mode-map (kbd "C-c s o") #'my/individual-visibility-source-blocks)
+(define-key org-mode-map (kbd "C-c s O") #'org-hide-block-all)
 #+end_src
 
 ** Параметры экспортирования из org-mode
@@ -1670,18 +1617,13 @@ sudo apt install dvipng preview-latex-style
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-copy-link-url ()
     (interactive)
-    (kill-new (org-element-property :raw-link (org-element-context)))
-    (let ((text (evil-get-register ?\")))
-        (evil-set-register ?+ text)
-        (evil-set-register ?* text)
-        (evil-set-register ?0 text)
-        (message text)))
+    (kill-new (org-element-property :raw-link (org-element-context))))
 #+end_src
 
 Горячие клавиши для копирования ссылки.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key org-mode-map (kbd "C-c l y") #'my/org-copy-link-url)
 #+end_src
 
 ** Преобразование URL в ссылку с именем задачи или файла
@@ -1748,7 +1690,56 @@ sudo apt install dvipng preview-latex-style
 Добавляем горячие клавиши.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key org-mode-map (kbd "C-c l m") #'my/make-task-link)
+(define-key org-mode-map (kbd "C-c l M") #'my/make-link-for-call)
+(define-key org-mode-map (kbd "C-c l t") #'org-toggle-link-display)
+(define-key org-mode-map (kbd "C-c Y") #'org-id-copy)
+#+end_src
+
+** Клавиши для работы с таблицами
+
+Для перемещения строк и столбцов таблицы есть клавиши =Alt+стрелки=.
+
+Однако пару клавиш перемещения запретим в пользу концепции блокнота.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map (kbd "S-<down>") nil)
+(define-key org-mode-map (kbd "S-<up>") nil)
+(define-key org-mode-map (kbd "S-<left>") nil)
+(define-key org-mode-map (kbd "S-<right>") nil)
+#+end_src
+
+Полезные клавиши для работы с таблицей.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map (kbd "C-c b i c") #'org-table-insert-column)
+(define-key org-mode-map (kbd "C-c b i h") #'org-table-insert-hline)
+(define-key org-mode-map (kbd "C-c b i H") #'org-table-hline-and-move)
+(define-key org-mode-map (kbd "C-c b i r") #'org-table-insert-row)
+(define-key org-mode-map (kbd "C-c b d c") #'org-table-delete-column)
+(define-key org-mode-map (kbd "C-c b d r") #'org-table-kill-row)
+(define-key org-mode-map (kbd "C-c b -") #'org-table-insert-hline)
+(define-key org-mode-map (kbd "C-c b a") #'org-table-align)
+(define-key org-mode-map (kbd "C-c b c") #'org-table-create-or-convert-from-region)
+(define-key org-mode-map (kbd "C-c b e") #'org-table-edit-field)
+(define-key org-mode-map (kbd "C-c b f") #'org-table-edit-formulas)
+(define-key org-mode-map (kbd "C-c b g") #'org-table-toggle-column-width)
+(define-key org-mode-map (kbd "C-c b h") #'org-table-field-info)
+(define-key org-mode-map (kbd "C-c b r") #'org-table-recalculate)
+(define-key org-mode-map (kbd "C-c b R") #'org-table-recalculate-buffer-tables)
+(define-key org-mode-map (kbd "C-c b s") #'org-table-sort-lines)
+(define-key org-mode-map (kbd "C-c b t f") #'org-table-toggle-formula-debugger)
+(define-key org-mode-map (kbd "C-c b t o") #'org-table-toggle-coordinate-overlays)
+#+end_src
+
+Назначим описание этой группы клавиш.
+
+#+begin_src emacs-lisp :tangle yes
+(my/localleader-def nil 'org-mode-map
+    "b" '(:ignore t :which-key "tables")
+    "b d" '(:ignore t :which-key "delete")
+    "b i" '(:ignore t :which-key "insert")
+    "b t" '(:ignore t :which-key "toggle"))
 #+end_src
 
 ** Показ картинок-результатов выполнения org-babel блоков
@@ -1857,7 +1848,7 @@ sudo apt install dvipng preview-latex-style
 Повесим переключение в режим показа презентации на горячие клавиши.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(define-key org-mode-map (kbd "C-c t c") #'my/slide-view-toggle)
 #+end_src
 
 А это из документации к org-tree-slide, листаем слайды.
@@ -1866,25 +1857,6 @@ sudo apt install dvipng preview-latex-style
 (with-eval-after-load "org-tree-slide"
     (define-key org-tree-slide-mode-map (kbd "<f9>") 'org-tree-slide-move-previous-tree)
     (define-key org-tree-slide-mode-map (kbd "<f10>") 'org-tree-slide-move-next-tree))
-#+end_src
-
-** Новый буфер в режиме org-mode
-
-Очень часто открываю новый буфер, после чего устанавливаюему режим org-mode. Автоматизируем эти действия.
-
-#+begin_src emacs-lisp :tangle yes
-(defun my/open-new-buffer-in-org-mode ()
-    (interactive)
-    (let ((buffer (generate-new-buffer "*new Org-mode*")))
-        (set-window-buffer nil buffer)
-        (with-current-buffer buffer
-            (org-mode))))
-#+end_src
-
-И горячие клавиши к созданию нового org-буфера.
-
-#+begin_src emacs-lisp :tangle yes
-;; ...
 #+end_src
 
 ** Agenda
@@ -1924,7 +1896,6 @@ sudo apt install dvipng preview-latex-style
 (add-hook 'org-agenda-mode-hook #'my/set-org-todo-keywords)
 (my/set-org-todo-keywords)
 #+end_src
-
 
 * Инструменты внешние
 
