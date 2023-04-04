@@ -1736,16 +1736,6 @@ sudo apt install dvipng preview-latex-style
 (define-key org-mode-map (kbd "C-c b t o") #'org-table-toggle-coordinate-overlays)
 #+end_src
 
-Назначим описание этой группы клавиш.
-
-#+begin_src emacs-lisp :tangle yes
-(my/localleader-def nil 'org-mode-map
-    "b" '(:ignore t :which-key "tables")
-    "b d" '(:ignore t :which-key "delete")
-    "b i" '(:ignore t :which-key "insert")
-    "b t" '(:ignore t :which-key "toggle"))
-#+end_src
-
 ** Показ картинок-результатов выполнения org-babel блоков
 
 Картинки отрисовываются сразу после загрузки org-файла.
