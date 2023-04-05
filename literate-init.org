@@ -1352,6 +1352,29 @@ dired-окне. Для этого надо установить соответс
 (define-key org-mode-map (kbd "C-c C-c") #'my/dwim-at-point)
 #+end_src
 
+Определяем поведение двойного нажатия мышки.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map [double-mouse-1] #'my/dwim-at-point)
+#+end_src
+
+Двойное нажатие мышки не отменяет одиночного, поэтому при двойном
+нажатии по ссылке картинка будет открыта в другом буфере.  Чтобы так не
+получилось в org-mode, сделаем обертку над функцией =org-open-at-mouse=.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'org-open-at-mouse
+            :around
+            (lambda (func &rest args)
+                (if (equal major-mode 'org-mode)
+                    (pcase (my/object-type-at-point)
+                        (`link-image
+                         nil)
+                        (_
+                         (apply func args)))
+                    (apply func args))))
+#+end_src
+
 ** Открытие org-ссылки в том же окне
 
 Открывать org-ссылку в другом окне оказалось очень неудобно. Сделаем
