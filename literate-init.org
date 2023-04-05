@@ -1225,6 +1225,32 @@ dired-окне. Для этого надо установить соответс
     (setq org-support-shift-select t))
 #+end_src
 
+** Функция показа и скрытия картинки в org-mode
+
+Очень удобная функция. Используем ее в следующих параграфах.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-toggle-inline-images-in-subtree (object &optional refresh)
+    "Refresh inline image previews in the current heading/tree."
+    (let* ((beg (or (org-element-property :begin object)
+                    (if (org-before-first-heading-p)
+                        (save-excursion (point-min))
+                        (save-excursion (org-back-to-heading) (point)))))
+           (end (or (org-element-property :end object)
+                    (if (org-before-first-heading-p)
+                        (save-excursion (org-next-visible-heading 1) (point))
+                        (save-excursion (org-end-of-subtree) (point)))))
+           (overlays (cl-remove-if-not (lambda (ov)
+                                           (overlay-get ov 'org-image-overlay))
+                                       (ignore-errors (overlays-in beg end)))))
+        (dolist (ov overlays nil)
+            (delete-overlay ov)
+            (setq org-inline-image-overlays (delete ov org-inline-image-overlays)))
+        (when (or refresh (not overlays))
+            (org-display-inline-images t t beg end)
+            t)))
+#+end_src
+   
 ** Разнообразная реакция на Ctrl-C Ctrl-C
 
 При нажатии Ctrl-C Ctrl-C попробуем узнать тип объекта под курсором и
@@ -1324,26 +1350,6 @@ dired-окне. Для этого надо установить соответс
             (_
              (org-ctrl-c-ctrl-c arg))
             )))
-
-(defun my/org-toggle-inline-images-in-subtree (object &optional refresh)
-    "Refresh inline image previews in the current heading/tree."
-    (let* ((beg (or (org-element-property :begin object)
-                    (if (org-before-first-heading-p)
-                        (save-excursion (point-min))
-                        (save-excursion (org-back-to-heading) (point)))))
-           (end (or (org-element-property :end object)
-                    (if (org-before-first-heading-p)
-                        (save-excursion (org-next-visible-heading 1) (point))
-                        (save-excursion (org-end-of-subtree) (point)))))
-           (overlays (cl-remove-if-not (lambda (ov)
-                                           (overlay-get ov 'org-image-overlay))
-                                       (ignore-errors (overlays-in beg end)))))
-        (dolist (ov overlays nil)
-            (delete-overlay ov)
-            (setq org-inline-image-overlays (delete ov org-inline-image-overlays)))
-        (when (or refresh (not overlays))
-            (org-display-inline-images t t beg end)
-            t)))
 #+end_src
 
 Определяем поведение клавиши Enter для evil.
