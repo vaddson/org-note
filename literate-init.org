@@ -111,6 +111,7 @@ email clients, file templates and snippets."
 (menu-bar-mode     1)  ;; Графическое меню.
 (tool-bar-mode     1)  ;; Tool-bar.
 (scroll-bar-mode   1)  ;; Полосы прокрутки.
+(tab-bar-mode      1)  ;; Панель с вкладками.
 #+end_src
 
 ** Красивые темы и установка темы по-умолчанию
@@ -1096,6 +1097,26 @@ dired-окне. Для этого надо установить соответс
           (use-dialog-box t)
           (use-file-dialog t))
         (call-interactively #'find-file-other-tab)))
+#+end_src
+
+** Открытие файлов автоматически в отдельных вкладках.
+
+Следуя концепции блокнота, под каждый файл, открытый мышкой через меню, будем создавать отдельную вкладку.
+Неподготовленному к Emacs пользователю это позволит видеть открытые файлы в более-менее привычном виде.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'find-file
+            :around
+            (lambda (func &rest args)
+                (interactive)
+                (let* ((from-menu-p (and (listp last-nonmenu-event)
+                                         (member 'menu-bar last-nonmenu-event)))
+                       (func (if from-menu-p
+                                 'find-file-other-tab
+                                 func)))
+                    (if (interactive-p)
+                        (apply 'call-interactively func args)
+                        (apply func args)))))
 #+end_src
    
 * Проекты (projects)
