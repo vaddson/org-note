@@ -2145,6 +2145,19 @@ treemacs при показе текущего файла в дереве про�
 (define-key cfw:calendar-mode-map "d" #'cfw:org-open-agenda-day)
 #+end_src
 
+* Буфер на старте с логотипом (dashboard)
+
+** Приветственная страница
+
+#+begin_src emacs-lisp :tangle yes
+(setq inhibit-splash-screen t)
+(find-file (concat my/config-dir "/docs/wellcome.org"))
+(highlight-indent-guides-mode -1)
+(setq-local display-line-numbers nil)
+(read-only-mode 1)
+(toggle-truncate-lines -1)
+#+end_src
+
 * Программирование
 
 ** Подсказки компилятору для обработки org-babel блоков
