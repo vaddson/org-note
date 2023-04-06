@@ -609,6 +609,14 @@ Type [M-x list-faces-display] to see all colors.
 (global-set-key (kbd "C-x r v") #'bookmark-save)
 #+end_src
    
+** Контекстное меню по правой клавише мыши
+
+Сделаем привычное контекстное меню по правой клавише мыши.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key [mouse-3] #'context-menu-open)
+#+end_src
+
 * Подсказки, выпадашки, автодополнения
 
 ** Ivy - меню с поиском по частичному совпадению
