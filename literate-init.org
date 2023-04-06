@@ -166,10 +166,10 @@ email clients, file templates and snippets."
 
 ** Мигание курсора
 
-Выключаем мигание курсора.
+Включаем мигание курсора.
 
 #+begin_src emacs-lisp :tangle yes
-(blink-cursor-mode 0)
+(blink-cursor-mode 1)
 #+end_src
 
 ** Настройка статусной панели (modeline)
@@ -671,7 +671,9 @@ Type [M-x list-faces-display] to see all colors.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package counsel
-    :ensure t)
+    :ensure t
+    :config
+    (setq counsel-switch-buffer-preview-virtual-buffers nil))
 (use-package counsel-projectile
     :ensure t)
 #+end_src
