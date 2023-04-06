@@ -1380,6 +1380,8 @@ dired-окне. Для этого надо установить соответс
 (define-key org-mode-map (kbd "C-c C-c") #'my/dwim-at-point)
 #+end_src
 
+** Разнообразная реакция на двойное нажатие мышки
+
 Определяем поведение двойного нажатия мышки.
 
 #+begin_src emacs-lisp :tangle yes
@@ -1391,16 +1393,16 @@ dired-окне. Для этого надо установить соответс
 получилось в org-mode, сделаем обертку над функцией =org-open-at-mouse=.
 
 #+begin_src emacs-lisp :tangle yes
-(advice-add #'org-open-at-mouse
-            :around
-            (lambda (func &rest args)
-                (if (equal major-mode 'org-mode)
-                    (pcase (my/object-type-at-point)
-                        (`link-image
-                         nil)
-                        (_
-                         (apply func args)))
-                    (apply func args))))
+(defun my/cancel-mouse-action (func &rest args)
+    (if (equal major-mode 'org-mode)
+        (pcase (my/object-type-at-point)
+            ((or `link-image `item)
+             nil)
+            (_
+             (apply func args)))
+        (apply func args)))
+
+(advice-add #'org-open-at-mouse :around #'my/cancel-mouse-action)
 #+end_src
 
 ** Открытие org-ссылки в том же окне
