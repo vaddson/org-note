@@ -2152,7 +2152,7 @@ treemacs при показе текущего файла в дереве про�
 
 #+begin_src emacs-lisp :tangle yes
 (setq inhibit-splash-screen t)
-(find-file (concat my/config-dir "/docs/wellcome.org"))
+(find-file (concat my/config-dir "/docs/welcome.org"))
 (highlight-indent-guides-mode -1)
 (setq-local display-line-numbers nil)
 (read-only-mode 1)
