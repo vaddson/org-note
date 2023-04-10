@@ -2286,6 +2286,8 @@ treemacs при показе текущего файла в дереве про�
 (setq-local display-line-numbers nil)
 (read-only-mode 1)
 (toggle-truncate-lines -1)
+(search-forward-regexp "^\* ")
+(beginning-of-line)
 #+end_src
 
 * Программирование
