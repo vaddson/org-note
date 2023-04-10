@@ -1171,6 +1171,24 @@ dired-окне. Для этого надо установить соответс
                 (apply func args)))
 #+end_src
    
+** Выравнивание по правому краю статусных строк
+
+Для снижения визуальных перегрузок с левой стороны сделаем подготовку
+по правому краю статусных строк (mode-line и header-line).
+
+#+begin_src emacs-lisp :tangle yes
+(defun simple-mode-line-render (left right)
+    "Return a string of `window-width' length.
+Containing LEFT, and RIGHT aligned respectively."
+    (let ((available-width
+           (- (window-total-width)
+              (+ (length (format-mode-line left))
+                 (length (format-mode-line right))))))
+        (append left
+                (list (format (format "%%%ds" available-width) ""))
+                right)))
+#+end_src
+   
 ** Элементы управления окнами в header-line
 
 Пользователь, не знакомый с Emacs, не будет знать что делать, если
@@ -1215,24 +1233,30 @@ Emacs откроет второе окно с какой-то информаци
  header-line-format
  (let* ((saved-format (copy-list header-line-format))
         (new-format
-         (append '((:eval (propertize " X "
-                           'face
-                           '(:background "#aa0000" :foreground "gray")
-                           'mouse-face
-                           '(:background "red" :foreground "white")
-                           'local-map (make-header-line-mouse-map
-                                       'mouse-1
-                                       (my/head-line-mouse-control
-                                        delete-window))))
-                   (:eval (propertize " □ "
-                           'mouse-face
-                           '(:background "gray" :foreground "black")
-                           'local-map (make-header-line-mouse-map
-                                       'mouse-1
-                                       (my/head-line-mouse-control
-                                        delete-other-windows))))
-                   ("_   "))
-                 saved-format)))
+         `(:eval
+           (simple-mode-line-render
+
+            ;; Left
+            ',saved-format
+            
+            ;; Right
+            '(("  _")
+              (:eval (propertize " □ "
+                      'mouse-face
+                      '(:background "gray" :foreground "black")
+                      'local-map (make-header-line-mouse-map
+                                  'mouse-1
+                                  (my/head-line-mouse-control
+                                   delete-other-windows))))
+              (:eval (propertize " X "
+                      'face
+                      '(:background "#aa0000" :foreground "gray")
+                      'mouse-face
+                      '(:background "red" :foreground "white")
+                      'local-map (make-header-line-mouse-map
+                                  'mouse-1
+                                  (my/head-line-mouse-control
+                                   delete-window)))))))))
      new-format))
 #+end_src
 
