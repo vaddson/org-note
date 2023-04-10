@@ -1115,6 +1115,8 @@ dired-окне. Для этого надо установить соответс
 Неподготовленному к Emacs пользователю это позволит видеть открытые файлы в более-менее привычном виде.
 
 #+begin_src emacs-lisp :tangle yes
+(setq my/prevent-new-tab nil)
+
 (defmacro my/advice-other-tab (func-orig func-other-tab)
     `(advice-add #',func-orig
                  :around
@@ -1122,15 +1124,25 @@ dired-окне. Для этого надо установить соответс
                      (interactive)
                      (let* ((from-menu-p (and (listp last-nonmenu-event)
                                               (member 'menu-bar last-nonmenu-event)))
-                            (func (if from-menu-p
+                            (func (if (and from-menu-p
+                                           (not my/prevent-new-tab))
                                       ',func-other-tab
                                       func)))
+                         (setq my/prevent-new-tab nil)
                          (if (interactive-p)
                              (apply 'call-interactively func args)
                              (apply func args))))))
 
 (my/advice-other-tab find-file find-file-other-tab)
 (my/advice-other-tab switch-to-buffer switch-to-buffer-other-tab)
+
+(advice-add #'customize-themes
+            :around
+            (lambda (func &rest args)
+                (interactive)
+                (tab-new)
+                (setq my/prevent-new-tab t)
+                (apply func args)))
 #+end_src
    
 * Проекты (projects)
