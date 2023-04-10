@@ -1217,9 +1217,8 @@ Emacs откроет второе окно с какой-то информаци
          (,func)))
 #+end_src
    
-Теперь создадим меню для элементов управления окном.  Их будет три
-"X", "□" и муляж "_" для узнаваемости.  Когда разберусь, как их
-придвинуть к правому краю, муляж уберу.
+Теперь создадим меню для элементов управления окном.
+Их будет два "□", "X".
 
 #+begin_src emacs-lisp :tangle yes
 (require 'cl)
@@ -1240,8 +1239,7 @@ Emacs откроет второе окно с какой-то информаци
             ',saved-format
             
             ;; Right
-            '(("  _")
-              (:eval (propertize " □ "
+            '((:eval (propertize " □ "
                       'mouse-face
                       '(:background "gray" :foreground "black")
                       'local-map (make-header-line-mouse-map
