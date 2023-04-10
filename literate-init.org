@@ -1109,6 +1109,8 @@ dired-окне. Для этого надо установить соответс
         (call-interactively #'find-file-other-tab)))
 #+end_src
 
+* Имитация интерфейса блокнотов
+
 ** Открытие файлов автоматически в отдельных вкладках.
 
 Следуя концепции блокнота, под каждый файл, открытый мышкой через
@@ -1169,6 +1171,71 @@ dired-окне. Для этого надо установить соответс
                 (apply func args)))
 #+end_src
    
+** Элементы управления окнами в header-line
+
+Пользователь, не знакомый с Emacs, не будет знать что делать, если
+Emacs откроет второе окно с какой-то информацией.  Научить
+пользователя клавишам работы с окнами и буферами не входит в парадигму
+блокнота. Все должно быть знакомо или интуитивно понятно.  Для этого
+предусмотрим знакомые элементы управления:
+- "X" - закрыть окно,
+- "□" - развернуть окно.
+
+Чтобы это сделать, понядобятся функции, которые делают окно под
+указателем мыши активным и применяют к нему указанное действие.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/select-window-at-mouse ()
+    (let* ((position-cons (last (mouse-position)))
+           (x (car position-cons))
+           (y (cdr position-cons))
+           (window (window-at x y)))
+        (select-window window)))
+
+(defmacro my/head-line-mouse-control (func)
+    `(lambda ()
+         (interactive)
+         (my/select-window-at-mouse)
+         (,func)))
+#+end_src
+   
+Теперь создадим меню для элементов управления окном.  Их будет три
+"X", "□" и муляж "_" для узнаваемости.  Когда разберусь, как их
+придвинуть к правому краю, муляж уберу.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'cl)
+
+(defun make-header-line-mouse-map (mouse function)
+    (let ((map (make-sparse-keymap)))
+        (define-key map (vector 'header-line mouse) function)
+        map))
+
+(setq-default
+ header-line-format
+ (let* ((saved-format (copy-list header-line-format))
+        (new-format
+         (append '((:eval (propertize " X "
+                           'face
+                           '(:background "#aa0000" :foreground "gray")
+                           'mouse-face
+                           '(:background "red" :foreground "white")
+                           'local-map (make-header-line-mouse-map
+                                       'mouse-1
+                                       (my/head-line-mouse-control
+                                        delete-window))))
+                   (:eval (propertize " □ "
+                           'mouse-face
+                           '(:background "gray" :foreground "black")
+                           'local-map (make-header-line-mouse-map
+                                       'mouse-1
+                                       (my/head-line-mouse-control
+                                        delete-other-windows))))
+                   ("_   "))
+                 saved-format)))
+     new-format))
+#+end_src
+
 * Проекты (projects)
 
 ** Установка и настройка работы с проектами (Projectile)
