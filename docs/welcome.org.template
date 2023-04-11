@@ -1,4 +1,4 @@
-*-- [[../banners/gunicorn.png]]      ORG БЛОКНОТ     --*
+*-- [[{{banner}}]]      ORG БЛОКНОТ     --*
 # (для редактирования org-файлов в родной среде)
 
 
@@ -34,7 +34,7 @@
   =Есть. И много!=
   Почитать можно:
   - тут в online      : [[https://orgmode.org/]],
-  - или тут в offline : [[elisp:(call-process "gio" nil 0 nil "open" "./Org. Full Manual.pdf")][Org. Full Manual.pdf]].
+  - или тут в offline : [[elisp:(call-process "gio" nil 0 nil "open" "{{full_manual}}")][Org. Full Manual.pdf]].
 
 * Что дальше?
 

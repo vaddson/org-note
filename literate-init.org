@@ -2316,15 +2316,48 @@ treemacs при показе текущего файла в дереве про�
 
 ** Приветственная страница
 
+Напишем функцию, которая по шаблону из файла создает буфер в режиме
+org-mode с приветствием и показывает его.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/show-welcome ()
+    (interactive)
+    (let* ((name "*Welcome*")
+           (buffer (get-buffer-create name))
+           (file-template (concat my/config-dir
+                                  "/docs/welcome.org.template"))
+           (banner (concat my/config-dir
+                           "/banners/gunicorn.png"))
+           (org-full-manual (concat my/config-dir
+                                    "/docs/Org. Full Manual.pdf"))
+           (text-template)
+           (text))
+        (with-current-buffer buffer
+            (erase-buffer)
+            (org-mode)
+            (insert-file-contents file-template)
+            (goto-char 1)
+            (setq text-template (buffer-string))
+            (setq text (string-replace "{{banner}}" banner text-template))
+            (setq text (string-replace "{{full_manual}}" org-full-manual text))
+            (erase-buffer)
+            (insert text)
+            (goto-char 1)
+            (org-toggle-inline-images)
+            (highlight-indent-guides-mode -1)
+            (setq-local display-line-numbers nil)
+            (read-only-mode 1)
+            (search-forward-regexp "^\* ")
+            (beginning-of-line)
+            (toggle-truncate-lines 1))
+        (switch-to-buffer buffer)))
+#+end_src
+
+Теперь запретим показ родного приветствия Emacs и покажем свое.
+
 #+begin_src emacs-lisp :tangle yes
 (setq inhibit-splash-screen t)
-(find-file (concat my/config-dir "/docs/welcome.org"))
-(highlight-indent-guides-mode -1)
-(setq-local display-line-numbers nil)
-(read-only-mode 1)
-(search-forward-regexp "^\* ")
-(beginning-of-line)
-(toggle-truncate-lines 1)
+(my/show-welcome)
 #+end_src
 
 * Программирование
