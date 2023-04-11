@@ -1499,13 +1499,14 @@ Emacs откроет второе окно с какой-то информаци
              (let ((match (and (org-at-item-checkbox-p)
                                (match-string 1))))
                  (org-toggle-checkbox (if (equal match "[ ]") '(16)))))  ; Set '-' to checkbox.
-            ((or `table `table-row)
-             (if (org-at-TBLFM-p)
-                 (org-table-calc-current-TBLFM)
-                 (ignore-errors
-                     (save-excursion
-                         (goto-char (org-element-property :contents-begin context))
-                         (org-call-with-arg 'org-table-recalculate (or arg t))))))
+
+            ;; ((or `table `table-row)
+            ;;  (if (org-at-TBLFM-p)
+            ;;      (org-table-calc-current-TBLFM)
+            ;;      (ignore-errors
+            ;;          (save-excursion
+            ;;              (goto-char (org-element-property :contents-begin context))
+            ;;              (org-call-with-arg 'org-table-recalculate (or arg t))))))
 
             ;; (`table-cell
             ;;  (org-table-blank-field)
@@ -1546,13 +1547,9 @@ Emacs откроет второе окно с какой-то информаци
              (let ((match (and (org-at-item-checkbox-p)
                                (match-string 1))))
                  (org-toggle-checkbox (if (equal match "[ ]") '(16)))))  ; Set '-' to checkbox.
-            ((or `table `table-row)
-             (if (org-at-TBLFM-p)
-                 (org-table-calc-current-TBLFM)
-                 (ignore-errors
-                     (save-excursion
-                         (goto-char (org-element-property :contents-begin context))
-                         (org-call-with-arg 'org-table-recalculate (or arg t))))))
+
+            ((or `table `table-row `table-cell)
+             (org-ctrl-c-ctrl-c))
 
             (_
              nil)
