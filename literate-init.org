@@ -1527,10 +1527,42 @@ Emacs откроет второе окно с какой-то информаци
 
 ** Разнообразная реакция на двойное нажатие мышки
 
+Пропишем аналогичное поведение на двойное нажатие мышки.
+Выделение слова стоит оставить не тронутым.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/dwim-at-mouse (&optional arg)
+    (interactive "P")
+    (let ((type (my/object-type-at-point)))
+        (pcase type
+
+            (`link-image
+             (my/org-toggle-inline-images-in-subtree (org-element-at-point)))
+
+            ((or `latex-fragment `latex-environment)
+             (org-latex-preview arg))
+
+            (`item
+             (let ((match (and (org-at-item-checkbox-p)
+                               (match-string 1))))
+                 (org-toggle-checkbox (if (equal match "[ ]") '(16)))))  ; Set '-' to checkbox.
+            ((or `table `table-row)
+             (if (org-at-TBLFM-p)
+                 (org-table-calc-current-TBLFM)
+                 (ignore-errors
+                     (save-excursion
+                         (goto-char (org-element-property :contents-begin context))
+                         (org-call-with-arg 'org-table-recalculate (or arg t))))))
+
+            (_
+             nil)
+            )))
+#+end_src
+
 Определяем поведение двойного нажатия мышки.
 
 #+begin_src emacs-lisp :tangle yes
-(define-key org-mode-map [double-mouse-1] #'my/dwim-at-point)
+(define-key org-mode-map [down-double-mouse-1] #'my/dwim-at-mouse)
 #+end_src
 
 Двойное нажатие мышки не отменяет одиночного, поэтому при двойном
