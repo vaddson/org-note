@@ -143,8 +143,14 @@ email clients, file templates and snippets."
 
 #+begin_src emacs-lisp :tangle yes
 (use-package doom-themes
-    :ensure t
-    :config
+    :ensure t)
+#+end_src
+
+Если не задана кастомная тема, загрузим тему по-умолчанию.
+
+#+begin_src emacs-lisp :tangle yes
+(unless (and (boundp custom-enabled-themes)
+             custom-enabled-themes)
     (load-theme 'doom-one t)
     ;; (load-theme 'doom-gruvbox-light t)
     ;; (load-theme 'doom-molokai t)
