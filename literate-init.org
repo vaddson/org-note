@@ -213,7 +213,7 @@ email clients, file templates and snippets."
 #+begin_src emacs-lisp :tangle yes
 (defun my/show-header-line ()
     (setq-default header-line-format
-                  '((which-func-mode ("" which-func-format " ")))))
+                  '((which-func-mode ("" which-func-format "")))))
 
 (defun my/hide-header-line ()
     (setq-default header-line-format nil))
@@ -1223,8 +1223,10 @@ Emacs откроет второе окно с какой-то информаци
 пользователя клавишам работы с окнами и буферами не входит в парадигму
 блокнота. Все должно быть знакомо или интуитивно понятно.  Для этого
 предусмотрим знакомые элементы управления:
-- "X" - закрыть окно,
-- "□" - развернуть окно.
+- "X"  - закрыть окно,
+- "□"  - развернуть окно.
+и один незнакомый:
+- "x2" - разделить окно горизонтально или вертикально (правой кнопкой).
 
 Чтобы это сделать, понядобятся функции, которые делают окно под
 указателем мыши активным и применяют к нему указанное действие.
@@ -1245,14 +1247,17 @@ Emacs откроет второе окно с какой-то информаци
 #+end_src
    
 Теперь создадим меню для элементов управления окном.
-Их будет два "□", "X".
+Их будет три: "x2", "□" и "X".
 
 #+begin_src emacs-lisp :tangle yes
 (require 'cl)
 
-(defun make-header-line-mouse-map (mouse function)
+(defun make-header-line-mouse-map (mouse-func-alist)
     (let ((map (make-sparse-keymap)))
-        (define-key map (vector 'header-line mouse) function)
+        (dolist (pair mouse-func-alist)
+            (let ((mouse (car pair))
+                  (func (cdr pair)))
+                (define-key map (vector 'header-line mouse) func)))
         map))
 
 (setq-default
@@ -1266,22 +1271,28 @@ Emacs откроет второе окно с какой-то информаци
             ',saved-format
             
             ;; Right
-            '((:eval (propertize " □ "
+            '((:eval (propertize "x2"
                       'mouse-face
                       '(:background "gray" :foreground "black")
                       'local-map (make-header-line-mouse-map
-                                  'mouse-1
-                                  (my/head-line-mouse-control
-                                   delete-other-windows))))
+                                  `((mouse-1 . ,(my/head-line-mouse-control
+                                                 split-window-below))
+                                    (mouse-3 . ,(my/head-line-mouse-control
+                                                 split-window-right))))))
+              (:eval (propertize " □ "
+                      'mouse-face
+                      '(:background "gray" :foreground "black")
+                      'local-map (make-header-line-mouse-map
+                                  `((mouse-1 . ,(my/head-line-mouse-control
+                                                 delete-other-windows))))))
               (:eval (propertize " X "
                       'face
                       '(:background "#aa0000" :foreground "gray")
                       'mouse-face
                       '(:background "red" :foreground "white")
                       'local-map (make-header-line-mouse-map
-                                  'mouse-1
-                                  (my/head-line-mouse-control
-                                   delete-window)))))))))
+                                  `((mouse-1 . ,(my/head-line-mouse-control
+                                                 delete-window)))))))))))
      new-format))
 #+end_src
 
