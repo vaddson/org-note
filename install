@@ -1,0 +1,31 @@
+#!/bin/sh
+
+PROJECT_DIR=$(dirname `which $0`)
+CONFIG_DIR=${HOME}/.config/org-note
+EMACS_DIR=${HOME}/.emacs.d
+EMACS_DIR_BACKUP=${HOME}/.emacs.d_backup_by_org-note
+
+echo
+echo "Welcome to Org-note installation!"
+echo
+
+echo "Saving previous Emacs directory..."
+if [ -e $EMACS_DIR ]; then
+    if [ ! -e $EMACS_DIR_BACKUP ]; then
+        mv $EMACS_DIR $EMACS_DIR_BACKUP
+        echo "Your previous Emacs directory was saved into " $EMACS_DIR_BACKUP .
+    fi
+fi
+
+rm -fr $CONFIG_DIR
+ln -s $PROJECT_DIR $CONFIG_DIR
+echo "Find Emacs configuration files in " $CONFIG_DIR .
+
+rm -fr $EMACS_DIR
+mkdir $EMACS_DIR
+cp $CONFIG_DIR/init.el $EMACS_DIR/
+
+echo "Done."
+echo
+echo "Now run Emacs and wait ending of the installation."
+echo
