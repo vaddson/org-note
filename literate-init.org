@@ -2322,9 +2322,9 @@ treemacs при показе текущего файла в дереве про�
 (highlight-indent-guides-mode -1)
 (setq-local display-line-numbers nil)
 (read-only-mode 1)
-(toggle-truncate-lines -1)
 (search-forward-regexp "^\* ")
 (beginning-of-line)
+(toggle-truncate-lines 1)
 #+end_src
 
 * Программирование
