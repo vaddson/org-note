@@ -1,7 +1,6 @@
 #+title: Конфигурация Org-note для Emacs
 #+startup: content
 #+startup: noindent
-#+startup: noinlineimages
 
 * Вводная 
 
