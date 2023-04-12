@@ -27,7 +27,7 @@
 2. Для работы с PlantUML установите Java и Graphvis.
 3. Для работы с проектами установите Ripgrep.
 4. Для выполнения src-блоков на языке Python установите его.
-5. Аналогично для JavaScript и PHP.
+5. Аналогично для JavaScript, PHP и Kotlin.
 6. Для работы с LaTeX установите все необходимое.
    Подробности по установке необходимого в разделах:
    - [[id:14445add-09c5-45ee-a602-77416efe686f]["Экспорт в PDF через LaTeX"]],
@@ -1676,6 +1676,8 @@ If you use `org' and don't want your org files in the default location below, ch
 (require 'ob-js)
 (use-package ob-php
     :ensure t)
+(use-package ob-kotlin
+	:ensure t)
 #+end_src
 
 Подскажем редактору, как обрабатывать org-babel блоки.
@@ -1688,7 +1690,8 @@ If you use `org' and don't want your org files in the default location below, ch
      (plantuml . t)
      (python . t)
      (js . t)
-     (php . t)))
+     (php . t)
+	 (kotlin . t)))
 #+end_src
 
 ** Перенос длинных строк по словам
@@ -2599,4 +2602,22 @@ UTF-8 - наше всё! :)
     :ensure t)
 (use-package python-mode
     :ensure t)
+#+end_src
+
+** PHP
+
+Здесь только подсветка кода.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package php-mode
+	:ensure t)
+#+end_src
+
+** Konlin
+
+Здесь только подсветка кода.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package kotlin-mode
+	:ensure t)
 #+end_src
