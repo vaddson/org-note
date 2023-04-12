@@ -10,7 +10,8 @@
 В идеале он должен быть похож на Notepad, управляемый мышкой,
 стрелочками и привычными сочетаниями клавиш.
 
-[[./docs/org-note-welcome.png][org-note-welcome.png]]
+#+ATTR_HTML: :style margin-left: auto; margin-right: auto;
+[[./docs/org-note-welcome.png]]
 
 *Как установить*
 
