@@ -27,7 +27,8 @@
 2. Для работы с PlantUML установите Java и Graphvis.
 3. Для работы с проектами установите Ripgrep.
 4. Для выполнения src-блоков на языке Python установите его.
-5. Для работы с LaTeX установите все необходимое.
+5. Аналогично для JavaScript и PHP.
+6. Для работы с LaTeX установите все необходимое.
    Подробности по установке необходимого в разделах:
    - [[id:14445add-09c5-45ee-a602-77416efe686f]["Экспорт в PDF через LaTeX"]],
    - [[id:fd151894-5620-419e-97be-07770acae549]["LaTeX preview. Формулы прямо в org-тексте"]].
@@ -1663,15 +1664,31 @@ If you use `org' and don't want your org files in the default location below, ch
    :END:
 
 Подгружаем пакеты для запуска скриптов в org-babel блоках.
-Поддержка языков прописывается в [[id:cb53569d-930e-42f1-925b-8c3b660f9c4d][разделе]] программирования.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package ob-async
     :ensure t)
+(require 'ob-shell)
 (use-package ob-go
     :ensure t)
 (use-package ob-restclient
     :ensure t)
+(require 'ob-js)
+(use-package ob-php
+    :ensure t)
+#+end_src
+
+Подскажем редактору, как обрабатывать org-babel блоки.
+Здесь дружим org-babel со всеми установленными языками.
+
+#+begin_src emacs-lisp :tangle yes
+(org-babel-do-load-languages
+   'org-babel-load-languages
+   '((shell . t)
+     (plantuml . t)
+     (python . t)
+     (js . t)
+     (php . t)))
 #+end_src
 
 ** Перенос длинных строк по словам
@@ -1806,6 +1823,27 @@ text-mode, то он отменит перенос строк. :)
 #+begin_src emacs-lisp :tangle yes
 (setq org-export-with-toc nil)
 #+end_src
+
+** Вычисление babel-блоков при экспорте
+
+Запрещаем вычисление блоков при экспорте.  (Не сбрасывать
+org-export-babel-evaluate в nil - будут игнорирроваться все
+заголовки!)
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'org-mode-hook
+          (lambda ()
+              (setq org-babel-default-header-args
+                    (cons '(:eval . "never-export")
+                          (assq-delete-all :eval
+                                           org-babel-default-header-args)))))
+#+end_src
+
+В качестве альтернативы можно использовать одно из двух:
+- или ставим в каждом заголовке
+  : :eval never-export
+- или один раз прописываем в начале файла
+  : #+PROPERTY: header-args :eval never-export.
 
 ** Экспорт в PDF через LaTeX
    :PROPERTIES:
@@ -2403,25 +2441,6 @@ org-mode с приветствием и показывает его.
 #+end_src
 
 * Программирование
-
-** Подсказки компилятору для обработки org-babel блоков
-   :PROPERTIES:
-   :ID:       cb53569d-930e-42f1-925b-8c3b660f9c4d
-   :END:
-
-Подскажем редактору, как обрабатывать org-babel блоки.
-Здесь дружим org-babel со всеми установленными языками.
-
-(!) Но прежде чем дружить блоки с языками, надо загрузить сответствующую
-поддержку ob-блоков. Подгрузку смотри в [[id:c98e419e-f7e9-456d-b8f3-5037f0af775b][разделе]] главы Org.
-
-#+begin_src emacs-lisp :tangle yes
-(org-babel-do-load-languages
-   'org-babel-load-languages
-   '((shell . t)
-     (plantuml . t)
-     (python . t)))
-#+end_src
 
 ** Навигация по ошибкам
 
