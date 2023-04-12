@@ -19,7 +19,7 @@
 Установка:
 1. Установите сам Emacs версии 28 или выше.
 2. Склонируйте этот проект:
-   : git https://github.com/vaddson/org-note.git
+   : git clone https://github.com/vaddson/org-note.git
 3. Запустите скрипт установки:
    : ./org-note/install
 4. Запустите Emacs и дождитесь окончания установки.
