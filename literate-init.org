@@ -1,6 +1,7 @@
 #+title: Конфигурация Org-note для Emacs
 #+startup: content
 #+startup: noindent
+#+startup: noinlineimages
 
 * Вводная 
 
@@ -9,6 +10,8 @@
 
 В идеале он должен быть похож на Notepad, управляемый мышкой,
 стрелочками и привычными сочетаниями клавиш.
+
+[[./docs/org-note-welcome.png][org-note-welcome.png]]
 
 *Как установить*
 
