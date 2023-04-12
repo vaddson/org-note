@@ -650,7 +650,8 @@ Type [M-x list-faces-display] to see all colors.
 (global-set-key [mouse-3]
                 (lambda ()
                     (interactive)
-                    (mouse-set-point last-input-event)
+                    (unless (use-region-p)
+                        (mouse-set-point last-input-event))
                     (context-menu-open)))
 #+end_src
 
