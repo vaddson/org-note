@@ -651,7 +651,8 @@ Type [M-x list-faces-display] to see all colors.
                 (lambda ()
                     (interactive)
                     (unless (use-region-p)
-                        (mouse-set-point last-input-event))
+                        (mouse-set-point last-input-event)
+                        (redisplay t))
                     (context-menu-open)))
 #+end_src
 
