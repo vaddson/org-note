@@ -646,7 +646,6 @@ Type [M-x list-faces-display] to see all colors.
 Сделаем привычное контекстное меню по правой клавише мыши.
 
 #+begin_src emacs-lisp :tangle yes
-;; (global-set-key [mouse-3] #'context-menu-open)
 (global-set-key [mouse-3]
                 (lambda ()
                     (interactive)
@@ -754,6 +753,8 @@ Type [M-x list-faces-display] to see all colors.
 (global-set-key (kbd "C-h o") #'counsel-describe-symbol)
 (global-set-key (kbd "C-h t") #'counsel-load-theme)
 (global-set-key (kbd "C-h a") #'counsel-apropos)
+(require 'recentf)
+(global-set-key (kbd "C-x C-S-r") #'counsel-recentf)
 #+end_src
 
 ** Company. Автодополнения
