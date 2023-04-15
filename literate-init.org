@@ -1994,7 +1994,8 @@ sudo apt install dvipng preview-latex-style
 #+begin_src emacs-lisp :tangle yes
 (defun my/make-link-for-call--convert-file-raw-link-for-call (type raw-link)
     (if (equal type "file")
-            (concat "elisp:(call-process \"gio\" nil 0 nil \"open\" \"" raw-link "\")")
+        (concat "elisp:(call-process \"gio\" nil 0 nil \"open\" "
+                "(expand-file-name \"" raw-link "\"))")
         raw-link))
 #+end_src
 
