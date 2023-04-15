@@ -1437,6 +1437,16 @@ Emacs откроет второе окно с какой-то информаци
     (setq org-support-shift-select t))
 #+end_src
 
+** Преобразование выделенного региона в таблицу
+
+В CUA-mode заняты клавиши Ctrl-c и Ctrl-x, поэтому назначим
+преобразование выделенного текста в таблицу на еще одни горячие
+клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key org-mode-map (kbd "C-|") #'org-table-create-or-convert-from-region)
+#+end_src
+   
 ** Функция показа и скрытия картинки в org-mode
 
 Очень удобная функция (взята из Doom). Используем ее в следующих
