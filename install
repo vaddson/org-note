@@ -1,6 +1,7 @@
 #!/bin/sh
 
-PROJECT_DIR=$(dirname `which $0`)
+INSTALL_FILE=$(realpath $0)
+PROJECT_DIR=$(dirname $INSTALL_FILE)
 CONFIG_DIR=${HOME}/.config/org-note
 EMACS_DIR=${HOME}/.emacs.d
 EMACS_DIR_BACKUP=${HOME}/.emacs.d_backup_by_org-note
