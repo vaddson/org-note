@@ -2201,6 +2201,13 @@ sudo apt install dvipng preview-latex-style
               org-agenda-inhibit-startup t)
 #+end_src
 
+Горячие клавиши для вызова Агенды.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c o a a") #'org-agenda)
+(global-set-key (kbd "C-c o A") #'org-agenda)
+#+end_src
+
 ** Agenda. Статусы задач
 
 Здесь определяются нужные мне статусы задач.
