@@ -1226,7 +1226,7 @@ dired-окне. Для этого надо установить соответс
     "Return a string of `window-width' length.
 Containing LEFT, and RIGHT aligned respectively."
     (let ((available-width
-           (- (max 0 (1- (window-total-width)))
+           (- (max 0 (- (window-total-width) 2))
               (+ (length (format-mode-line left))
                  (length (format-mode-line right))))))
         (append left
