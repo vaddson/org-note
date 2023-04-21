@@ -2201,6 +2201,13 @@ sudo apt install dvipng preview-latex-style
               org-agenda-inhibit-startup t)
 #+end_src
 
+Горячие клавиши для вызова Агенды.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c o a a") #'org-agenda)
+(global-set-key (kbd "C-c o A") #'org-agenda)
+#+end_src
+
 ** Agenda. Статусы задач
 
 Здесь определяются нужные мне статусы задач.
@@ -2264,7 +2271,11 @@ treemacs при показе текущего файла в дереве про�
     :ensure t
     :config
     ;; Define some keys:
-    (setq magit-diff-refine-hunk t))
+    (setq magit-diff-refine-hunk t)
+    (global-set-key (kbd "C-x g") nil)
+    (global-set-key (kbd "C-x g g") #'magit-status)
+    (global-set-key (kbd "C-x g b") #'magit-branch-checkout)
+    (global-set-key (kbd "C-x g /") #'magit-dispatch))
 (use-package magit-gitflow
     :ensure t)
 (use-package magit-popup
@@ -2278,38 +2289,39 @@ treemacs при показе текущего файла в дереве про�
 Горячие клавиши для лога текущей ветки.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g u") #'magit-log-head)
 #+end_src
 
 Горячие клавиши для лога файла в активном буфере.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g h") #'magit-log-buffer-file)
 #+end_src
 
 Горячие клавиши для просмотра логов от git-команд.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g p") #'magit-process-buffer)
+(define-key magit-diff-mode-map (kbd "C-x g p") #'magit-process-buffer)
 #+end_src
 
 Горячие клавиши для выкачки информации по всем веткам (magit-fetch-all).
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g a") #'magit-fetch-all)
 #+end_src
 
 Блеймер (подробный)
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g B") #'magit-blame-addition)
 #+end_src
 
 Не блеймер и не Magit, но смысл тот же. Показываем информацию по
 каждой строке в отдельном буфере (=vc-annotate=).
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g n") #'vc-annotate)
 #+end_src
 
 ** Подсветка разницы с HEAD в каждой строке
@@ -2318,10 +2330,10 @@ treemacs при показе текущего файла в дереве про�
 
 #+begin_src emacs-lisp :tangle yes
 (use-package git-gutter-fringe
-	  :ensure t
-	  :config
-	  (global-git-gutter-mode t)
-	  (setq git-gutter:update-interval 1))
+    :ensure t
+    :config
+    (global-git-gutter-mode t)
+    (setq git-gutter:update-interval 1))
 #+end_src
 
 ** Blamer (смотрелка заголовков последних коммитов в коде)
@@ -2356,7 +2368,7 @@ treemacs при показе текущего файла в дереве про�
 Посадим на горячие клавиши переключение blamer-mode.
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(global-set-key (kbd "C-x g m") #'blamer-mode)
 #+end_src
 
 ** Календарь, как его представление
@@ -2365,28 +2377,28 @@ treemacs при показе текущего файла в дереве про�
 
 #+begin_src emacs-lisp :tangle yes
 (use-package calfw
-	:ensure t
-	:config
-	(setq cfw:face-item-separator-color nil
-		  cfw:render-line-breaker 'cfw:render-line-breaker-none
-		  cfw:fchar-junction ?╋
-		  cfw:fchar-vertical-line ?┃
-		  cfw:fchar-horizontal-line ?━
-		  cfw:fchar-left-junction ?┣
-		  cfw:fchar-right-junction ?┫
-		  cfw:fchar-top-junction ?┯
-		  cfw:fchar-top-left-corner ?┏
-		  cfw:fchar-top-right-corner ?┓))
+    :ensure t
+    :config
+    (setq cfw:face-item-separator-color nil
+          cfw:render-line-breaker 'cfw:render-line-breaker-none
+          cfw:fchar-junction ?╋
+          cfw:fchar-vertical-line ?┃
+          cfw:fchar-horizontal-line ?━
+          cfw:fchar-left-junction ?┣
+          cfw:fchar-right-junction ?┫
+          cfw:fchar-top-junction ?┯
+          cfw:fchar-top-left-corner ?┏
+          cfw:fchar-top-right-corner ?┓))
 
 (use-package calfw-org
-	:ensure t)
+    :ensure t)
 (use-package calfw-cal
-	:ensure t
-	:commands (cfw:cal-create-source))
+    :ensure t
+    :commands (cfw:cal-create-source))
 
 (use-package calfw-ical
-	:ensure t
-	:commands (cfw:ical-create-source))
+    :ensure t
+    :commands (cfw:ical-create-source))
 
 ;; (use-package org-gcal
 ;; 	:defer t)
@@ -2400,10 +2412,15 @@ treemacs при показе текущего файла в дереве про�
 
 Ниже запилим сочетания клавиш.
 
-Вызов буфера с cfw-календарем:
+Вызов буфера с cfw-календарем (сделаем его в отдельной вкладке):
 
 #+begin_src emacs-lisp :tangle yes
-;; ...
+(defun my/cfw:open-org-calendar ()
+    (interactive)
+    (tab-new)
+    (cfw:open-org-calendar))
+
+(global-set-key (kbd "C-c o a c") #'my/cfw:open-org-calendar)
 #+end_src
 
 Вызов Agenda для выбранного дня:
