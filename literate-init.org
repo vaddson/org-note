@@ -1233,7 +1233,7 @@ dired-окне. Для этого надо установить соответс
     "Return a string of `window-width' length.
 Containing LEFT, and RIGHT aligned respectively."
     (let ((available-width
-           (- (max 0 (- (window-total-width) 2))
+           (- (max 0 (1- (window-total-width)))
               (+ (length (format-mode-line left))
                  (length (format-mode-line right))))))
         (append left
@@ -1259,8 +1259,8 @@ Emacs откроет второе окно с какой-то информаци
 #+begin_src emacs-lisp :tangle yes
 (defun my/select-window-at-mouse ()
     (let* ((position-cons (last (mouse-position)))
-           (x (car position-cons))
-           (y (cdr position-cons))
+           (x (max 0 (1- (car position-cons))))
+           (y (1+ (cdr position-cons)))
            (window (window-at x y)))
         (select-window window)))
 
@@ -1285,6 +1285,18 @@ Emacs откроет второе окно с какой-то информаци
                 (define-key map (vector 'header-line mouse) func)))
         map))
 
+(setq my/header-line-mouse-x2-map (make-header-line-mouse-map
+                                   `((mouse-1 . ,(my/head-line-mouse-control
+                                                  split-window-below))
+                                     (mouse-3 . ,(my/head-line-mouse-control
+                                                  split-window-right))))
+      my/header-line-mouse-square-map (make-header-line-mouse-map
+                                       `((mouse-1 . ,(my/head-line-mouse-control
+                                                      delete-other-windows))))
+      my/header-line-mouse-x-map (make-header-line-mouse-map
+                                  `((mouse-1 . ,(my/head-line-mouse-control
+                                                 delete-window)))))
+
 (setq-default
  header-line-format
  (let* ((saved-format (copy-list header-line-format))
@@ -1299,25 +1311,17 @@ Emacs откроет второе окно с какой-то информаци
             '((:eval (propertize "x2"
                       'mouse-face
                       '(:background "gray" :foreground "black")
-                      'local-map (make-header-line-mouse-map
-                                  `((mouse-1 . ,(my/head-line-mouse-control
-                                                 split-window-below))
-                                    (mouse-3 . ,(my/head-line-mouse-control
-                                                 split-window-right))))))
+                      'local-map my/header-line-mouse-x2-map))
               (:eval (propertize " □ "
                       'mouse-face
                       '(:background "gray" :foreground "black")
-                      'local-map (make-header-line-mouse-map
-                                  `((mouse-1 . ,(my/head-line-mouse-control
-                                                 delete-other-windows))))))
+                      'local-map my/header-line-mouse-square-map))
               (:eval (propertize " X "
                       'face
                       '(:background "#aa0000" :foreground "gray")
                       'mouse-face
                       '(:background "red" :foreground "white")
-                      'local-map (make-header-line-mouse-map
-                                  `((mouse-1 . ,(my/head-line-mouse-control
-                                                 delete-window)))))))))))
+                      'local-map my/header-line-mouse-x-map)))))))
      new-format))
 #+end_src
 
