@@ -332,7 +332,6 @@ Type [M-x list-faces-display] to see all colors.
 
 #+begin_src emacs-lisp :tangle yes
 (cua-mode t)
-(setq org-support-shift-select t)
 (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
 (transient-mark-mode 1) ;; No region when it is not highlighted
 (setq cua-keep-region-after-copy nil) ;; Standard Windows behaviour
@@ -1439,7 +1438,8 @@ Emacs откроет второе окно с какой-то информаци
                                  (setq org-adapt-indentation t)))
     (setq org-confirm-babel-evaluate nil)
     (setq org-confirm-elisp-link-function nil)
-    (setq org-support-shift-select t))
+    (when cua-mode
+        (setq org-support-shift-select t)))
 #+end_src
 
 ** Преобразование выделенного региона в таблицу
@@ -1640,6 +1640,44 @@ Emacs откроет второе окно с какой-то информаци
 (advice-add #'org-open-at-mouse :around #'my/cancel-mouse-action)
 #+end_src
 
+** Изменение типов меток списка
+
+В cua-mode заняты клавиши Shift-Left и Shift-Right. Перенаправим их на
+Ctrl-Left и Ctrl-Right.  Пусть в заголовках работают, как смета
+статусов задач, а в списках - смета типов меток.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/dwim-ctrl-right (&optional arg)
+    (interactive "P")
+    (let ((type (my/object-type-at-point)))
+        (pcase type
+            ((or `item `plain-list)
+             (org-cycle-list-bullet))
+            (`headline
+             (org-shiftright))
+            (_
+             (right-word)))))
+
+(defun my/dwim-ctrl-left (&optional arg)
+    (interactive "P")
+    (let ((type (my/object-type-at-point)))
+        (pcase type
+            ((or `item `plain-list)
+             (org-cycle-list-bullet 'previous))
+            (`headline
+             (org-shiftleft))
+            (_
+             (left-word)))))
+#+end_src
+
+Для cua-mode повесим на Ctrl-Left и Ctrl-Right.
+
+#+begin_src emacs-lisp :tangle yes
+(when cua-mode
+    (define-key org-mode-map (kbd "C-<right>") #'my/dwim-ctrl-right)
+    (define-key org-mode-map (kbd "C-<left>") #'my/dwim-ctrl-left))
+#+end_src
+   
 ** Открытие org-ссылки в том же окне
 
 Открывать org-ссылку в другом окне оказалось очень неудобно. Сделаем
