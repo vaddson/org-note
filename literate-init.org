@@ -659,6 +659,12 @@ Type [M-x list-faces-display] to see all colors.
                     (context-menu-open)))
 #+end_src
 
+** Выделение прямоугольной области по Ctrl и клавише мышки
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key [C-down-mouse-1] #'mouse-drag-region-rectangle)
+#+end_src
+
 * Подсказки, выпадашки, автодополнения
 
 ** Ivy - меню с поиском по частичному совпадению
