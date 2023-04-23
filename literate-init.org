@@ -955,6 +955,32 @@ Ctrl-a - выделение всего текста.
 (global-set-key (kbd "M-s M-s") #'swiper-isearch-thing-at-point)
 #+end_src
 
+На панели инструментов есть кнопка "Search", по которой вызывается
+функция =isearch-forward=.  Неплохо заменить ее на вызов функции
+=swiper=. Однако, победить tool-bar по документации пока не удалось,
+поэтому воспользуемся снова advice-add и last-nonmenu-event-sign.
+
+#+begin_src emacs-lisp :tangle yes
+(defmacro my/advice-when-menu (func-orig func-other last-nonmenu-event-sign)
+    `(advice-add #',func-orig
+                 :around
+                 (lambda (func &rest args)
+                     (interactive)
+                     (let* ((from-menu-p (and (listp last-nonmenu-event)
+                                              (or (member 'menu-bar
+                                                          last-nonmenu-event)
+                                                  (member ',last-nonmenu-event-sign
+                                                          last-nonmenu-event))))
+                            (func (if from-menu-p
+                                      ',func-other
+                                      func)))
+                         (if (interactive-p)
+                             (apply 'call-interactively func args)
+                             (apply func args))))))
+
+(my/advice-when-menu isearch-forward swiper isearch-forward)
+#+end_src
+
 ** Символ технического пробела `_'
 
 Emacs по-умолчанию не причисляет символ `_' к составу слова, что очень неудобно.
