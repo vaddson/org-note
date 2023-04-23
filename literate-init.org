@@ -659,9 +659,19 @@ Type [M-x list-faces-display] to see all colors.
                     (context-menu-open)))
 #+end_src
 
-** Выделение прямоугольной области по Ctrl и клавише мышки
+** Выделение. Прямоугольная область выделения по Ctrl и клавише мышки
+
+В cua-mode по-умолчанию текст выделяется через Shift со стрелками.
+
+Сделаем прямоугольное выделение по Ctrl с левой клавишей мышки, а по
+Ctrl-a - выделение всего текста.
+
+Сочетание =Ctrl-x пробел= по-прежнему включает начало прямоугольного
+выделения, если нужно выделять клавишами.
 
 #+begin_src emacs-lisp :tangle yes
+(when cua-mode
+    (global-set-key (kbd "C-a") #'mark-whole-buffer))
 (global-set-key [C-down-mouse-1] #'mouse-drag-region-rectangle)
 #+end_src
 
