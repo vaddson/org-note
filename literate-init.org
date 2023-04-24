@@ -670,8 +670,13 @@ Ctrl-a - выделение всего текста.
 выделения, если нужно выделять клавишами.
 
 #+begin_src emacs-lisp :tangle yes
-(when cua-mode
-    (global-set-key (kbd "C-a") #'mark-whole-buffer))
+(defun my/mark-whole-buffer-/-move-beginning-of-line (&optional arg)
+    (interactive)
+    (if cua-mode
+        (mark-whole-buffer)
+        (move-beginning-of-line arg)))
+
+(global-set-key (kbd "C-a") #'my/mark-whole-buffer-/-move-beginning-of-line)
 (global-set-key [C-down-mouse-1] #'mouse-drag-region-rectangle)
 #+end_src
 
