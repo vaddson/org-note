@@ -971,9 +971,8 @@ Ctrl-a - выделение всего текста.
                  :around
                  (lambda (func &rest args)
                      (interactive)
-                     (let* ((from-menu-p (and (listp last-nonmenu-event)
-                                              (or (member 'menu-bar
-                                                          last-nonmenu-event)
+                     (let* ((from-menu-p (or (my/from-menu-p)
+                                             (and (listp last-nonmenu-event)
                                                   (member ',last-nonmenu-event-sign
                                                           last-nonmenu-event))))
                             (func (if from-menu-p
@@ -1243,16 +1242,18 @@ dired-окне. Для этого надо установить соответс
                  :around
                  (lambda (func &rest args)
                      (interactive)
-                     (let* ((from-menu-p (and (listp last-nonmenu-event)
-                                              (member 'menu-bar last-nonmenu-event)))
-                            (func (if (and from-menu-p
-                                           (not (my/prevent-new-tab)))
-                                      ',func-other-tab
-                                      func)))
+                     (let ((func (if (and (my/from-menu-p)
+                                          (not (my/prevent-new-tab)))
+                                     ',func-other-tab
+                                     func)))
                          (setq my/prevent-new-tab nil)
                          (if (interactive-p)
                              (apply 'call-interactively func args)
                              (apply func args))))))
+
+(defun my/from-menu-p ()
+    (and (listp last-nonmenu-event)
+         (member 'menu-bar last-nonmenu-event)))
 #+end_src
 
 Предварительная работа закончена. Обернем теперь нужные функции из меню.
@@ -2308,6 +2309,19 @@ sudo apt install dvipng preview-latex-style
               org-agenda-start-on-weekday nil
               org-agenda-start-day "-3d"
               org-agenda-inhibit-startup t)
+#+end_src
+
+Если агенда вызвана через меню, сделаем для нее отдельную вкладку.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'org-agenda
+            :around
+            (lambda (func &rest args)
+                (interactive)
+                (when (my/from-menu-p)
+                    (tab-new)
+                    (my/prevent-new-tab 'charge))
+                (apply func args)))
 #+end_src
 
 Горячие клавиши для вызова Агенды.
