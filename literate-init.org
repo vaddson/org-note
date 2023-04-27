@@ -1106,12 +1106,53 @@ Imenu - дает не только удобный способ навигаци�
 (global-set-key (kbd "C-x C-b") #'ibuffer)
 #+end_src
 
-** Фокус для help-буферов
+** Отображение popup-буферов внизу окна и прочие настройки показа буферов
+
+Мне удобней работать с popup-окнами (например окно помощи "*Help*"),
+когда они появляются не сбоку фрейма, а снизу.  Делается через задание
+списка ACTION для функции =display-buffer=.
 
 Настроим сначала фокус у окон с help-буферами.
 
 #+begin_src emacs-lisp :tangle yes
 (setq help-window-select t)
+#+end_src
+
+Теперь все остальное.
+
+#+begin_src emacs-lisp :tangle yes
+(setq display-buffer-alist
+      '(
+        ;; PlantUML
+        ("^\\*PLANTUML Preview\\*$"
+         (display-buffer-reuse-window))
+
+        ;; Ilist
+        ("^\\*Ilist\\*$"
+         (display-buffer-reuse-window)
+         (window-width . 0.30))
+
+        ;; org-mode
+        ("^\\*org-roam\\*$"
+         (display-buffer-reuse-window display-buffer-in-side-window)
+         (window-height . 0.5))
+
+        ;; Magit (status)
+        ("^magit: .*"
+         (display-buffer-reuse-window display-buffer-same-window))
+
+        ;; Magit log
+        ("^magit-log.*"
+         (display-buffer-reuse-window display-buffer-same-window))
+
+        ;; Magit refs
+        ("^magit-refs:.*"
+         (display-buffer-reuse-window display-buffer-same-window))
+
+        ;; Magit process
+        ("^magit-process:.*"
+         (display-buffer-reuse-window display-buffer-at-bottom)
+         (window-height . 0.40))))
 #+end_src
 
 * Работа с файлами
@@ -2363,6 +2404,128 @@ sudo apt install dvipng preview-latex-style
 #+begin_src emacs-lisp :tangle yes
 (add-hook 'org-agenda-mode-hook #'my/set-org-todo-keywords)
 (my/set-org-todo-keywords)
+#+end_src
+
+** Org-roam
+
+Загрузка пакета и начальная инициализация.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam
+    :ensure t
+    :init
+    (setq org-roam-directory (file-truename "~/org/roam/"))
+    (make-directory org-roam-directory t)
+    (setq org-roam-v2-ack t)
+    (setq org-roam-database-connector 'sqlite)
+    (mkdir org-roam-directory t)
+    :config
+    (add-hook 'org-roam-mode-hook #'my/set-word-wrap)
+    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+    (org-roam-db-autosync-mode)
+    (require 'org-roam-protocol))
+#+end_src
+
+Переопределим реакцию по нажатию Enter на раздел в org-roam-mode.
+Нужно, чтобы работало наоборот с префиксным аргументом и без него.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'org-roam-node-visit
+            :around
+            (lambda (func node &optional other-window force)
+                (if other-window
+                    (funcall func node nil force)
+                    (funcall func node t force))))
+
+(advice-add #'org-roam-preview-visit
+            :around
+            (lambda (func file point &optional other-window)
+                (if other-window
+                    (funcall func file point nil)
+                    (funcall func file point t))))
+#+end_src
+
+Открываем узел сразу на весь фрейм и с окном ссылок.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-node-find ()
+    (interactive)
+    (org-roam-node-find)
+    (unless (get-buffer-window org-roam-buffer)
+        (org-roam-buffer-toggle)))
+
+(defun my/org-roam-buffer-toggle ()
+    (interactive)
+    (org-roam-buffer-toggle)
+    (when-let ((buffer (get-buffer org-roam-buffer)))
+        (switch-to-buffer-other-window buffer)))
+#+end_src
+
+Горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c r r") #'my/org-roam-buffer-toggle)
+(global-set-key (kbd "C-c r f") #'my/org-roam-node-find)
+(define-key org-mode-map (kbd "C-c r i") #'org-roam-node-insert)
+(global-set-key (kbd "C-c r c") #'org-roam-capture)
+(global-set-key (kbd "C-c r j") #'org-roam-dailies-capture-today)
+#+end_src
+
+И добавим в меню эти действия с org-roam.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key-after global-map [menu-bar org-roam]
+    (cons "Org-Roam" (make-sparse-keymap "Org-Roam")) 'tools)
+
+(define-key global-map
+    [menu-bar org-roam dailies-capture-today]
+    '("Dailies Capture Today" . org-roam-dailies-capture-today))
+
+(define-key global-map
+    [menu-bar org-roam capture]
+    '("Capture" . org-roam-capture))
+
+(define-key global-map
+    [menu-bar org-roam node-insert]
+    '("Insert Node" . org-roam-node-insert))
+
+(define-key global-map
+    [menu-bar org-roam node-find]
+    '("Find Node" . my/org-roam-node-find))
+
+(define-key global-map
+    [menu-bar org-roam buffer-toggle]
+    '("Toggle Org-roam Buffer" . my/org-roam-buffer-toggle))
+#+end_src
+
+** Org-roam-ui
+
+Рисует красивый граф org-roam-узлов подобный Obsidian'у. Открывает для
+этого браузер.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam-ui
+    :ensure t
+    :after org-roam
+    :config
+    (setq org-roam-ui-sync-theme t
+          org-roam-ui-follow t
+          org-roam-ui-update-on-save t
+          org-roam-ui-open-on-start t))
+#+end_src
+
+Горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c r g") #'org-roam-ui-mode)
+#+end_src
+
+И меню.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key global-map
+    [menu-bar org-roam ui-mode]
+    '("Show UI Graph" . org-roam-ui-mode))
 #+end_src
 
 * Инструменты внешние
