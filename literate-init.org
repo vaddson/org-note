@@ -2457,8 +2457,9 @@ sudo apt install dvipng preview-latex-style
 (defun my/org-roam-buffer-toggle ()
     (interactive)
     (org-roam-buffer-toggle)
-    (when-let ((buffer (get-buffer org-roam-buffer)))
-        (switch-to-buffer-other-window buffer)))
+    (when (get-buffer-window org-roam-buffer)
+        (when-let ((buffer (get-buffer org-roam-buffer)))
+            (switch-to-buffer-other-window buffer))))
 #+end_src
 
 Горячие клавиши.
