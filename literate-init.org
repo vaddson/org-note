@@ -2479,33 +2479,6 @@ sudo apt install dvipng preview-latex-style
 (global-set-key (kbd "C-c r j") #'org-roam-dailies-capture-today)
 #+end_src
 
-И добавим в меню эти действия с org-roam.
-
-#+begin_src emacs-lisp :tangle yes
-(define-key-after global-map [menu-bar org-roam]
-    (cons "Org-Roam" (make-sparse-keymap "Org-Roam")) 'tools)
-
-(define-key global-map
-    [menu-bar org-roam dailies-capture-today]
-    '("Dailies Capture Today" . org-roam-dailies-capture-today))
-
-(define-key global-map
-    [menu-bar org-roam capture]
-    '("Capture" . org-roam-capture))
-
-(define-key global-map
-    [menu-bar org-roam node-insert]
-    '("Insert Node" . org-roam-node-insert))
-
-(define-key global-map
-    [menu-bar org-roam node-find]
-    '("Find Node" . my/org-roam-node-find))
-
-(define-key global-map
-    [menu-bar org-roam buffer-toggle]
-    '("Toggle Org-roam Buffer" . my/org-roam-buffer-toggle))
-#+end_src
-
 ** Org-roam-ui
 
 Рисует красивый граф org-roam-узлов подобный Obsidian'у. Открывает для
@@ -2528,14 +2501,39 @@ sudo apt install dvipng preview-latex-style
 (global-set-key (kbd "C-c r g") #'org-roam-ui-mode)
 #+end_src
 
-И меню.
+** Org-roam. Меню
+
+Создадим меню с действиями для Org-roam.
 
 #+begin_src emacs-lisp :tangle yes
+(define-key-after global-map [menu-bar org-roam]
+    (cons "Org-Roam" (make-sparse-keymap "Org-Roam")) 'tools)
+
 (define-key global-map
     [menu-bar org-roam ui-mode]
     '("Show UI Graph" . org-roam-ui-mode))
-#+end_src
 
+(define-key global-map
+    [menu-bar org-roam dailies-capture-today]
+    '("Dailies Capture Today" . org-roam-dailies-capture-today))
+
+(define-key global-map
+    [menu-bar org-roam capture]
+    '("Capture" . org-roam-capture))
+
+(define-key global-map
+    [menu-bar org-roam buffer-toggle]
+    '("Toggle Org-roam Buffer" . my/org-roam-buffer-toggle))
+
+(define-key global-map
+    [menu-bar org-roam node-insert]
+    '("Insert Node" . org-roam-node-insert))
+
+(define-key global-map
+    [menu-bar org-roam node-find]
+    '("Find Node" . my/org-roam-node-find))
+#+end_src
+   
 * Инструменты внешние
 
 ** Treemacs
