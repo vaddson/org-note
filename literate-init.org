@@ -2450,9 +2450,16 @@ sudo apt install dvipng preview-latex-style
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-roam-node-find ()
     (interactive)
-    (org-roam-node-find)
-    (unless (get-buffer-window org-roam-buffer)
-        (org-roam-buffer-toggle)))
+    (let* ((org-roam-window (get-buffer-window org-roam-buffer))
+           (new-tab-p (and (my/from-menu-p)
+                           (not org-roam-window))))
+        (if new-tab-p
+            (progn (tab-new)
+                   (org-roam-node-find)
+                   (delete-other-windows))
+            (org-roam-node-find))
+        (unless (get-buffer-window org-roam-buffer)
+            (org-roam-buffer-toggle))))
 
 (defun my/org-roam-buffer-toggle ()
     (interactive)
