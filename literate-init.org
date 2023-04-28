@@ -331,8 +331,30 @@ Type [M-x list-faces-display] to see all colors.
 
 Совместимость с привычными клавишами копирования, вставки и прочего.
 
+Ниже определим функцию, которую будем использовать на начальном экране
+(welcome). Функция устанавливает значение для cua-mode и запоминает
+его в кастомную переменную my/custom-cua-mode для следующих запусков
+редактора.
+
 #+begin_src emacs-lisp :tangle yes
-(cua-mode t)
+(defun my/custom-cua-mode (value)
+    (customize-save-variable 'my/custom-cua-mode value)
+    (cua-mode value))
+#+end_src
+
+Предусмотрим чтение кастомного значения для cua-mode. Это будет
+нужно, если пользователь на начальном экране (welcome) выключит режим
+cua-mode в намерении осваивать Emacs.
+
+#+begin_src emacs-lisp :tangle yes
+(if (boundp 'my/custom-cua-mode)
+    (cua-mode my/custom-cua-mode)
+    (cua-mode t))
+#+end_src
+
+Теперь до определим настройки для работы с cua-mode.
+
+#+begin_src emacs-lisp :tangle yes
 (setq cua-auto-tabify-rectangles nil) ;; Don't tabify after rectangle commands
 (transient-mark-mode 1) ;; No region when it is not highlighted
 (setq cua-keep-region-after-copy nil) ;; Standard Windows behaviour

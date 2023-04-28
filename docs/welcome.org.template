@@ -42,9 +42,9 @@
   расширяемым функционалом. Начать осваивать его можно так:
 
   1) Перейти на слепую 10-пальцевую печать.
-  2) [[elisp:(cua-mode -1)][Отключить cua-mode]] (это поддержка привычных клавиш)
+  2) [[elisp:(my/custom-cua-mode -1)][Отключить cua-mode]] (это поддержка привычных клавиш)
      и пройти [[elisp:(progn (tab-bar-new-tab) (help-with-tutorial-spec-language) (when (string-prefix-p "TUTORIAL" (buffer-name)) (setq-local tab-width 8)))][ознакомительное руководство]] на удобном языке.
-     На первых порах можно [[elisp:(cua-mode t)][включить cua-mode обратно]].
+     На первых порах можно [[elisp:(my/custom-cua-mode 1)][включить cua-mode обратно]].
   3) Познакомиться с языком [[https://www.gnu.org/software/emacs/manual/elisp.html][Emacs Lisp]].
   4) Написать свою конфигурацию Emacs.
 
