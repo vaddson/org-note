@@ -5,6 +5,27 @@
 (defun my/make-config-filename (filename)
     (concat my/config-dir "/" filename))
 
+;; Подцепим репозиторий melpa.
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
+
+;; Действия перед загрузкой пакетов. (Если какой-то пакет по
+;; прошествии времени упорно не находится в репозиториях, спасает
+;; ручной вызов функции =package-refresh-contents=.
+(setq package-enable-at-startup nil)
+(package-initialize)
+(unless package-archive-contents
+    (package-refresh-contents))
+
+;; Пакеты будем цеплять через =use-package=. Установим его.
+(if (not (package-installed-p 'use-package))
+    (progn (package-refresh-contents)
+           (package-install 'use-package)))
+
+;; Установим темы заранее для того, чтобы загружать их через customize.
+(use-package doom-themes
+    :ensure t)
+
 ;; Напишем свою загрузку org-конфигов для ускорения.
 ;;   EL-файл не будет пересобираться, если в том не будет необходимости.
 (defun my/org-babel-load-file (base-filename-without-org)

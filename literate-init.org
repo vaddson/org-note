@@ -99,31 +99,11 @@ email clients, file templates and snippets."
 
 * Подготовка к установке пакетов из репозиториев
 
-Подцепим репозиторий melpa.
+Все действия перенесены в [[./init.el][init.el]]. Там устанавливается репозиторий
+=melpa= и подгужается пакет с темами.
 
-#+begin_src emacs-lisp :tangle yes
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
-#+end_src
-
-Действия перед загрузкой пакетов. (Если какой-то пакет по прошествии
-времени упорно не находится в репозиториях, спасает ручной вызов
-функции =package-refresh-contents=.
-
-#+begin_src emacs-lisp :tangle yes
-(setq package-enable-at-startup nil)
-(package-initialize)
-(unless package-archive-contents
-    (package-refresh-contents))
-#+end_src
-
-Пакеты будем цеплять через =use-package=. Установим его.
-
-#+begin_src emacs-lisp :tangle yes
-(if (not (package-installed-p 'use-package))
-    (progn (package-refresh-contents)
-           (package-install 'use-package)))
-#+end_src
+Если какой-то пакет по прошествии времени упорно не находится в
+репозиториях, спасает ручной вызов функции =package-refresh-contents=.
 
 Не будем кошмарить логом с ошибками, если там только предупреждения.
 
@@ -151,15 +131,10 @@ email clients, file templates and snippets."
 Загружаем красивые темы и устанавливаем одну из них.
 Стараемся успеть до загрузки всех остальных настроек.
 
-#+begin_src emacs-lisp :tangle yes
-(use-package doom-themes
-    :ensure t)
-#+end_src
-
 Если не задана кастомная тема, загрузим тему по-умолчанию.
 
 #+begin_src emacs-lisp :tangle yes
-(unless (and (boundp custom-enabled-themes)
+(unless (and (boundp 'custom-enabled-themes)
              custom-enabled-themes)
     (load-theme 'doom-one t)
     ;; (load-theme 'doom-gruvbox-light t)
@@ -198,6 +173,16 @@ email clients, file templates and snippets."
 
 #+begin_src emacs-lisp :tangle yes
 (setq ring-bell-function 'ignore)
+#+end_src
+
+** Подтверждение удаления процессов при закрытии редактора
+
+По завершении работы Emacs спрашивает разрешения на закрытие
+запущенных процессов.  Лишний раз пугать пользователя Блокнота не
+стоит - отключим запрос подтверждения.
+
+#+begin_src emacs-lisp :tangle yes
+(setq confirm-kill-processes nil)
 #+end_src
 
 * Внешний вид UI и GUI
