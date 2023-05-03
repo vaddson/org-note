@@ -2486,6 +2486,12 @@ sudo apt install dvipng preview-latex-style
 (define-key org-mode-map (kbd "C-c r i") #'org-roam-node-insert)
 (global-set-key (kbd "C-c r c") #'org-roam-capture)
 (global-set-key (kbd "C-c r j") #'org-roam-dailies-capture-today)
+(define-key org-mode-map (kbd "C-c r a a") #'org-roam-alias-add)
+(define-key org-mode-map (kbd "C-c r d a") #'org-roam-alias-remove)
+(define-key org-mode-map (kbd "C-c r a r") #'org-roam-ref-add)
+(define-key org-mode-map (kbd "C-c r d r") #'org-roam-ref-remove)
+(define-key org-mode-map (kbd "C-c r a t") #'org-roam-tag-add)
+(define-key org-mode-map (kbd "C-c r d t") #'org-roam-tag-remove)
 #+end_src
 
 ** Org-roam-ui
@@ -2521,26 +2527,48 @@ sudo apt install dvipng preview-latex-style
 (define-key global-map
     [menu-bar org-roam ui-mode]
     '("Show UI Graph" . org-roam-ui-mode))
-
 (define-key global-map
     [menu-bar org-roam dailies-capture-today]
     '("Dailies Capture Today" . org-roam-dailies-capture-today))
-
 (define-key global-map
     [menu-bar org-roam capture]
     '("Capture" . org-roam-capture))
-
 (define-key global-map
     [menu-bar org-roam buffer-toggle]
     '("Toggle Org-roam Buffer" . my/org-roam-buffer-toggle))
-
 (define-key global-map
     [menu-bar org-roam node-insert]
     '("Insert Node" . org-roam-node-insert))
-
 (define-key global-map
     [menu-bar org-roam node-find]
     '("Find Node" . my/org-roam-node-find))
+
+(define-key-after global-map [menu-bar org-roam tag]
+    (cons "Tag" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+(define-key global-map
+    [menu-bar org-roam tag remove]
+    '("Remove" . org-roam-tag-remove))
+(define-key global-map
+    [menu-bar org-roam tag add]
+    '("Add" . org-roam-tag-add))
+
+(define-key-after global-map [menu-bar org-roam ref]
+    (cons "Ref" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+(define-key global-map
+    [menu-bar org-roam ref remove]
+    '("Remove" . org-roam-ref-remove))
+(define-key global-map
+    [menu-bar org-roam ref add]
+    '("Add" . org-roam-ref-add))
+
+(define-key-after global-map [menu-bar org-roam alias]
+    (cons "Alias" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+(define-key global-map
+    [menu-bar org-roam alias remove]
+    '("Remove" . org-roam-alias-remove))
+(define-key global-map
+    [menu-bar org-roam alias add]
+    '("Add" . org-roam-alias-add))
 #+end_src
    
 * Инструменты внешние
