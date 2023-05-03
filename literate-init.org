@@ -1829,6 +1829,8 @@ If you use `org' and don't want your org files in the default location below, ch
 #+begin_src emacs-lisp :tangle yes
 (use-package ob-async
     :ensure t)
+(use-package ob-mermaid
+    :ensure t)
 (require 'ob-shell)
 (use-package ob-go
     :ensure t)
@@ -1849,10 +1851,36 @@ If you use `org' and don't want your org files in the default location below, ch
    'org-babel-load-languages
    '((shell . t)
      (plantuml . t)
+     (mermaid . t)
      (python . t)
      (js . t)
      (php . t)
 	 (kotlin . t)))
+#+end_src
+
+** Поддержка показа картинок в результатах выполнения org-babel блоков
+
+Удобно сделать показ картинок в результатах src-блоков без указания
+имени файла картинки.  Для создания временного файла есть функция
+=org-babel-temp-file=, воспользуемся ей.  Макрос ниже создает лямбду,
+которая будет оборачивать через =advice-add= функции типа
+=org-babel-execute:<тип_блока>=.
+
+#+begin_src emacs-lisp :tangle yes
+(defmacro my/org-babel-execute (prefix)
+    `(lambda (func &rest args)
+         (let* ((body (car args))
+                (params (cadr args))
+                (out-file-p (cdr (assq :file params)))
+                (out-file (or out-file-p
+                              (org-babel-temp-file ,(format "%s-" (symbol-name prefix)) ".png")))
+                (new-params (if out-file-p
+                                params
+                                (cons `(:file . ,out-file) params)))
+                (result (apply func (list body new-params))))
+             (if out-file-p
+                 result
+                 out-file))))
 #+end_src
 
 ** Перенос длинных строк по словам
@@ -2946,28 +2974,30 @@ UTF-8 - наше всё! :)
              '(:cmdline . "-charset utf-8"))
 #+end_src
 
-Настроим параметр :file для plantuml-блоков по-умолчанию. Если параметр
-:file не указан, то создаем временный файл с картинкой (для этого есть
-функция =org-babel-temp-file=). Это нужно для рисования схем и
-картинок без лишних телодвижений.
+Настроим параметр :file для plantuml-блоков по-умолчанию. Если
+параметр :file не указан, то создаем временный файл с картинкой.
 
 #+begin_src emacs-lisp :tangle yes
-(defun my/org-babel-execute:plantuml (func &rest args)
-    (let* ((body (car args))
-           (params (cadr args))
-           (out-file-p (cdr (assq :file params)))
-           (out-file (or out-file-p
-                         (org-babel-temp-file "plantuml-" ".png")))
-           (new-params (if out-file-p
-                           params
-                           (cons `(:file . ,out-file) params)))
-           (result (apply func (list body new-params))))
-        (if out-file-p
-            result
-            out-file)))
-
 (advice-add #'org-babel-execute:plantuml
-            :around #'my/org-babel-execute:plantuml)
+            :around (my/org-babel-execute plantuml))
+#+end_src
+
+** Mermaid
+
+Mermaid - это аналог PlantUML. Для работы требует установки
+=mermail-cli=.  Прочитать можно тут: [[https://mermaid.js.org/intro/][About Mermaid]].
+
+#+begin_src emacs-lisp :tangle yes
+(use-package mermaid-mode
+    :ensure t)
+#+end_src
+   
+Настроим параметр :file для mermaid-блоков по-умолчанию. Если
+параметр :file не указан, то создаем временный файл с картинкой.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'org-babel-execute:mermaid
+            :around (my/org-babel-execute mermaid))
 #+end_src
 
 ** Python

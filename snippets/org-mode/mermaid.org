@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: mermaid
+# key: mermaid_
+# --
+#+begin_src mermaid
+$0
+#+end_src
