@@ -197,6 +197,14 @@ email clients, file templates and snippets."
 (blink-cursor-mode 1)
 #+end_src
 
+** Подсветка строки с курсором
+
+Подсветим строку с курсором во всех буферах.
+
+#+begin_src emacs-lisp :tangle yes
+(global-hl-line-mode 1)
+#+end_src
+   
 ** Настройка статусной панели (modeline)
 
 Установим в панели отображение позиции курсора.
