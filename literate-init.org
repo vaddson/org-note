@@ -2329,28 +2329,28 @@ sudo apt install dvipng preview-latex-style
     "Prepare window for org-tree-slide-mode."
     (interactive)
     (if (eq major-mode 'org-mode)
-            (progn
-                (my/hide-begin:end-block-delimiters)
-                ;; (doom-disable-line-numbers-h)
-				(my/set-word-wrap)
-                (my/hide-header-line)
-                (highlight-indent-guides-mode -1)
-                (centered-window-mode 1)
-                (org-tree-slide-mode 1))
+        (progn
+            (my/hide-begin:end-block-delimiters)
+            (my/display-line-numbers -1)
+            (my/set-word-wrap)
+            (my/hide-header-line)
+            (highlight-indent-guides-mode -1)
+            (centered-window-mode 1)
+            (org-tree-slide-mode 1))
         (message "For org-mode only!")))
 
 (defun my/slide-view-off ()
     "Returt window state from org-tree-slide-mode."
     (interactive)
     (if (eq major-mode 'org-mode)
-            (progn
-                (centered-window-mode -1)
-                (highlight-indent-guides-mode 1)
-                (my/show-header-line)
-                (my/show-begin:end-block-delimiters)
-                ;; (doom-enable-line-numbers-h)
-				(my/set-word-wrap)
-                (org-tree-slide-mode -1))
+        (progn
+            (centered-window-mode -1)
+            (highlight-indent-guides-mode 1)
+            (my/show-header-line)
+            (my/show-begin:end-block-delimiters)
+            (my/display-line-numbers 1)
+            (my/set-word-wrap)
+            (org-tree-slide-mode -1))
         (message "For org-mode only!")))
 #+end_src
 
