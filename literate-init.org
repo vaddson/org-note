@@ -1455,6 +1455,7 @@ Emacs откроет второе окно с какой-то информаци
     :ensure t
     :config
     (projectile-mode +1)
+    (add-to-list 'projectile-project-root-files-bottom-up ".projectile")
     (projectile-load-known-projects))
 (use-package counsel-projectile
     :ensure t)
@@ -1495,6 +1496,7 @@ Emacs откроет второе окно с какой-то информаци
 #+begin_src emacs-lisp :tangle yes
 (define-key projectile-mode-map (kbd "C-c p p") #'counsel-projectile-switch-project)
 (define-key projectile-mode-map (kbd "C-c p f") #'counsel-projectile-find-file)
+(define-key projectile-mode-map (kbd "C-c p i") #'projectile-invalidate-cache)
 (define-key projectile-mode-map (kbd "C-c p c") #'projectile-compile-project)
 (define-key projectile-mode-map (kbd "C-c p R") #'projectile-run-project)
 (define-key projectile-mode-map (kbd "C-c p T") #'projectile-test-project)
