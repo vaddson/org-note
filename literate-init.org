@@ -1832,8 +1832,8 @@ If you use `org' and don't want your org files in the default location below, ch
 #+begin_src emacs-lisp :tangle yes
 (use-package org-cliplink
 	:ensure t)
-(use-package orgit
-	:ensure t)
+;; (use-package orgit
+;; 	:ensure t)
 (use-package ox-clip
 	:ensure t)
 (use-package toc-org
