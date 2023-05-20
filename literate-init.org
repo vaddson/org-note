@@ -2298,6 +2298,14 @@ sudo apt install dvipng preview-latex-style
 (add-hook 'org-babel-after-execute-hook 'org-display-inline-images 'append)
 #+end_src
 
+Чтобы можно было задавать размер картинки через #+attr_org:
+: #+attr_org: :width 800
+нужно сбросить переменную в nil.
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-image-actual-width nil)
+#+end_src
+
 ** Слайды и презентации
 
 Для показа интерактивных презентаций воспользуемся пакетом
