@@ -1420,32 +1420,35 @@ Emacs откроет второе окно с какой-то информаци
                                   `((mouse-1 . ,(my/head-line-mouse-control
                                                  delete-window)))))
 
-(setq-default
- header-line-format
- (let* ((saved-format (copy-list header-line-format))
-        (new-format
-         `(:eval
-           (simple-mode-line-render
+(defun my/append-controls-to-header-line-format ()
+    (setq-default
+     header-line-format
+     (let* ((saved-format (copy-list header-line-format))
+            (new-format
+             `(:eval
+               (simple-mode-line-render
 
-            ;; Left
-            ',saved-format
-            
-            ;; Right
-            '((:eval (propertize "x2"
-                      'mouse-face
-                      '(:background "gray" :foreground "black")
-                      'local-map my/header-line-mouse-x2-map))
-              (:eval (propertize " □ "
-                      'mouse-face
-                      '(:background "gray" :foreground "black")
-                      'local-map my/header-line-mouse-square-map))
-              (:eval (propertize " X "
-                      'face
-                      '(:background "#aa0000" :foreground "gray")
-                      'mouse-face
-                      '(:background "red" :foreground "white")
-                      'local-map my/header-line-mouse-x-map)))))))
-     new-format))
+                ;; Left
+                ',saved-format
+                
+                ;; Right
+                '((:eval (propertize "x2"
+                          'mouse-face
+                          '(:background "gray" :foreground "black")
+                          'local-map my/header-line-mouse-x2-map))
+                  (:eval (propertize " □ "
+                          'mouse-face
+                          '(:background "gray" :foreground "black")
+                          'local-map my/header-line-mouse-square-map))
+                  (:eval (propertize " X "
+                          'face
+                          '(:background "#aa0000" :foreground "gray")
+                          'mouse-face
+                          '(:background "red" :foreground "white")
+                          'local-map my/header-line-mouse-x-map)))))))
+         new-format)))
+
+(my/append-controls-to-header-line-format)
 #+end_src
 
 * Проекты (projects)
@@ -2368,7 +2371,7 @@ sudo apt install dvipng preview-latex-style
             (org-modern-mode 1)
             (my/display-line-numbers -1)
             (my/set-word-wrap)
-            (my/hide-header-line)
+            ;; (my/hide-header-line)
             (highlight-indent-guides-mode -1)
             (centered-window-mode 1)
             (org-tree-slide-mode 1))
@@ -2381,7 +2384,7 @@ sudo apt install dvipng preview-latex-style
         (progn
             (centered-window-mode -1)
             (highlight-indent-guides-mode 1)
-            (my/show-header-line)
+            ;; (my/show-header-line)
             (org-modern-mode -1)
             (my/show-begin:end-block-delimiters)
             (my/display-line-numbers 1)
