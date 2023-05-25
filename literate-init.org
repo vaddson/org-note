@@ -2306,6 +2306,16 @@ sudo apt install dvipng preview-latex-style
 (setq org-image-actual-width nil)
 #+end_src
 
+** Org-modern. Красивое представление org
+
+Красивое представление org-файлов может пригодится для показа
+презентаций.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-modern
+    :ensure t)
+#+end_src
+
 ** Слайды и презентации
 
 Для показа интерактивных презентаций воспользуемся пакетом
@@ -2355,6 +2365,7 @@ sudo apt install dvipng preview-latex-style
     (if (eq major-mode 'org-mode)
         (progn
             (my/hide-begin:end-block-delimiters)
+            (org-modern-mode 1)
             (my/display-line-numbers -1)
             (my/set-word-wrap)
             (my/hide-header-line)
@@ -2371,6 +2382,7 @@ sudo apt install dvipng preview-latex-style
             (centered-window-mode -1)
             (highlight-indent-guides-mode 1)
             (my/show-header-line)
+            (org-modern-mode -1)
             (my/show-begin:end-block-delimiters)
             (my/display-line-numbers 1)
             (my/set-word-wrap)
