@@ -2161,6 +2161,58 @@ sudo apt install dvipng preview-latex-style
 \lambda, \Sigma изображаются соответстущими символами греческого
 алфавита.
 
+** LaTeX preview. Ручное изменение размеров формул (костыль)
+
+На одном из ноутов формулы стали не выше текстовой строки.  Полагаю,
+что софт ловит физический размер экрана и строит формулы по нему
+(больше разрешение - меньше формула).
+
+Сделаем костыль по увеличению и уменьшению формул.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/latex-preview-scale-set (scale)
+    (if (> scale 0.0)
+            (setq org-format-latex-options (plist-put org-format-latex-options
+                                                      :scale (float scale)))
+        (plist-get org-format-latex-options :scale)))
+
+(defun my/latex-preview-scale-inc ()
+    (let ((prev-scale (plist-get org-format-latex-options :scale)))
+        (my/latex-preview-scale-set (+ prev-scale 1.0))))
+
+(defun my/latex-preview-scale-dec ()
+    (let ((prev-scale (plist-get org-format-latex-options :scale)))
+        (my/latex-preview-scale-set (- prev-scale 1.0))))
+#+end_src
+
+Вешаем на горячие клавиши и приделываем сообщения. Поскольку быстрее всего сразу
+назначить величину масштаба (например 4), то первой предусмотрим такую операцию.
+Остальные две - увеличить и уменьшить.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/set-scale-for-latex-preview (scale)
+	(interactive (list (read-string "Enter LaTeX preview scale: ")))
+	(my/latex-preview-scale-set (float (string-to-number scale)))
+	(message "Latex scale = %f"
+			 (plist-get org-format-latex-options :scale)))
+
+(defun my/increace-scale-for-latex-preview ()
+	(interactive)
+	(my/latex-preview-scale-inc)
+	(message "Latex scale = %f"
+			 (plist-get org-format-latex-options :scale)))
+
+(defun my/decreace-scale-for-latex-preview ()
+	(interactive)
+	(my/latex-preview-scale-dec)
+	(message "Latex scale = %f"
+			 (plist-get org-format-latex-options :scale)))
+
+(define-key org-mode-map (kbd "C-c j s") #'my/set-scale-for-latex-preview)
+(define-key org-mode-map (kbd "C-c j k") #'my/increace-scale-for-latex-preview)
+(define-key org-mode-map (kbd "C-c j j") #'my/decreace-scale-for-latex-preview)
+#+end_src
+
 ** Копирование ссылки в буфер обмена
 
 Быстрое вытаскивание ссылки из org-текста. Ссылка копируется сразу в три регистра: `+', `*' и `"'.
