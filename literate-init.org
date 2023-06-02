@@ -3133,7 +3133,7 @@ Mermaid - это аналог PlantUML. Для работы требует ус�
 
 #+begin_src emacs-lisp :tangle yes
 (use-package php-mode
-	:ensure t)
+    :ensure t)
 #+end_src
 
 ** Konlin
@@ -3142,5 +3142,5 @@ Mermaid - это аналог PlantUML. Для работы требует ус�
 
 #+begin_src emacs-lisp :tangle yes
 (use-package kotlin-mode
-	:ensure t)
+    :ensure t)
 #+end_src
