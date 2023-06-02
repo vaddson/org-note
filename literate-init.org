@@ -2521,18 +2521,22 @@ sudo apt install dvipng preview-latex-style
 (global-set-key (kbd "C-c o A") #'org-agenda)
 #+end_src
 
-Отдельно сделаем агенду на задачи в открытом файле.  Здесь просто
-добавляем пункт в меню агенды "c".
+Отдельно сделаем:
+- список файлов, из которых будет составляться агенда (пункт "f" в меню агенды),
+- агенду на задачи в открытом файле (пункт "c" в меню агенды).
 
 #+begin_src emacs-lisp :tangle yes
 (setq org-agenda-custom-commands
 
-      '(("n" "Agenda and all TODOs"
-         ((agenda #1="")
-          (alltodo #1#)))
+      '(("f" "Customize org agenda files"
+         ((customize-variable 'org-agenda-files)))
 
         ("c" "Agenda from current file" agenda ""
-         ((org-agenda-files (list (buffer-file-name)))))))
+         ((org-agenda-files (list (buffer-file-name)))))
+
+        ("n" "Agenda and all TODOs"
+         ((agenda #1="")
+          (alltodo #1#)))))
 #+end_src
 
 ** Agenda. Статусы задач
