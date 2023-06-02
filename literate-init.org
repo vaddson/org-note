@@ -1282,6 +1282,16 @@ dired-окне. Для этого надо установить соответс
         (call-interactively #'find-file-other-tab)))
 #+end_src
 
+** Режим открытых ранее файлов
+
+Включим выбоо ранее открытых файлов. В меню появится соответствующий
+пункт.
+
+#+begin_src emacs-lisp :tangle yes
+(recentf-mode 1)
+(global-set-key (kbd "C-x C-r") #'counsel-recentf)
+#+end_src
+   
 * Имитация интерфейса блокнотов
 
 ** Открытие файлов автоматически в отдельных вкладках.
