@@ -33,8 +33,9 @@
   (пока что они не отличаются от markdown)?
   =Есть. И много!=
   Почитать можно:
-  - тут в online      : [[https://orgmode.org/]],
-  - или тут в offline : [[elisp:(call-process "gio" nil 0 nil "open" "{{full_manual}}")][Org. Full Manual.pdf]].
+  - тут в online          : [[https://orgmode.org/]],
+  - или тут в offline     : [[elisp:(call-process "gio" nil 0 nil "open" "{{full_manual}}")][Org. Full Manual.pdf]].
+    ссылка для скачивания - https://orgmode.org/org.pdf
 
 * Что дальше?
 
