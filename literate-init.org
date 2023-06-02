@@ -2931,12 +2931,12 @@ org-mode с приветствием и показывает его.
     (interactive)
     (let* ((name "*Welcome*")
            (buffer (get-buffer-create name))
-           (file-template (concat my/config-dir
-                                  "/docs/welcome.org.template"))
-           (banner (concat my/config-dir
-                           "/banners/gunicorn.png"))
-           (org-full-manual (concat my/config-dir
-                                    "/docs/Org. Full Manual.pdf"))
+           (file-template (expand-file-name (concat my/config-dir
+                                                    "/docs/welcome.org.template")))
+           (banner (expand-file-name (concat my/config-dir
+                                             "/banners/gunicorn.png")))
+           (org-full-manual (expand-file-name (concat my/config-dir
+                                                      "/docs/Org. Full Manual.pdf")))
            (text-template)
            (text))
         (with-current-buffer buffer
