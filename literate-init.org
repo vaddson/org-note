@@ -1535,7 +1535,7 @@ Emacs откроет второе окно с какой-то информаци
 Определим горячие клавиши для работы с проектами.
 
 #+begin_src emacs-lisp :tangle yes
-(define-key projectile-mode-map (kbd "C-c p p") #'counsel-projectile-switch-project)
+(define-key projectile-mode-map (kbd "C-c p p") #'projectile-switch-project)
 (define-key projectile-mode-map (kbd "C-c p f") #'counsel-projectile-find-file)
 (define-key projectile-mode-map (kbd "C-c p i") #'projectile-invalidate-cache)
 (define-key projectile-mode-map (kbd "C-c p c") #'projectile-compile-project)
