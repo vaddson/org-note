@@ -2146,14 +2146,35 @@ sudo pacman -S texlive-langcyrillic
 sudo pacman -S texlive-latexextra
 #+end_example
 
-В настройки по-умолчанию (=org-latex-default-packages-alist=) уже
-прописаны следующие заголовки (файл [[./custom.el][custom.el]]):
+Так можно задавать нужные заголовки прямо в org-файле.
 
 #+begin_quote
 #+latex_header: \usepackage[utf8x]{inputenc}
 #+latex_header: \usepackage[T2A]{fontenc}
 #+latex_header: \usepackage[russian,english]{babel}
 #+end_quote
+
+Поместим настройки выше в переменную =org-latex-default-packages-alist=.
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-latex-default-packages-alist
+      '(("AUTO" "inputenc" t
+         ("pdflatex"))
+        ("" "graphicx" t nil)
+        ("" "grffile" t nil)
+        ("" "longtable" nil nil)
+        ("" "wrapfig" nil nil)
+        ("" "rotating" nil nil)
+        ("normalem" "ulem" t nil)
+        ("" "amsmath" t nil)
+        ("" "textcomp" t nil)
+        ("" "amssymb" t nil)
+        ("" "capt-of" nil nil)
+        ("" "hyperref" nil nil)
+        ("utf8x" "inputenc" nil nil)
+        ("T2A" "fontenc" nil nil)
+        ("russian,english" "babel" nil nil)))
+#+end_src
 
 ** Экспорт в Markdown
 
