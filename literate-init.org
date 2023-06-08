@@ -562,15 +562,20 @@ cua-mode в намерении осваивать Emacs.
 это удобно. Подсвечивать можно или символом "|", что не всегда
 работает гладко, или перекрашивая фон у символов (тут без проблем).
 
+/Замечание:/ Highlighitng-indent-guides сильно тормозит работу с
+длинными файлами по причине частого вызова функции redisplay. Поэтому
+подсветку отступов исключаем для режимов org-mode и markdown-mode.
+
 #+begin_src emacs-lisp :tangle yes
 (use-package highlight-indent-guides
     :ensure t
     :config
     (setq highlight-indent-guides-method 'column)
     (dolist (mode '(prog-mode-hook
-                    org-mode-hook
                     yaml-mode-hook
-                    markdown-mode-hook))
+                    ;; org-mode-hook
+                    ;; markdown-mode-hook
+                    ))
         (add-hook mode 'highlight-indent-guides-mode)))
 #+end_src
    
@@ -2468,7 +2473,7 @@ sudo apt install dvipng preview-latex-style
             (my/display-line-numbers -1)
             (my/set-word-wrap)
             ;; (my/hide-header-line)
-            (highlight-indent-guides-mode -1)
+            ;; (highlight-indent-guides-mode -1)
             (centered-window-mode 1)
             (org-tree-slide-mode 1))
         (message "For org-mode only!")))
@@ -2479,7 +2484,7 @@ sudo apt install dvipng preview-latex-style
     (if (eq major-mode 'org-mode)
         (progn
             (centered-window-mode -1)
-            (highlight-indent-guides-mode 1)
+            ;; (highlight-indent-guides-mode 1)
             ;; (my/show-header-line)
             (org-modern-mode -1)
             (my/show-begin:end-block-delimiters)
