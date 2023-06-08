@@ -2075,6 +2075,36 @@ text-mode, то он отменит перенос строк. :)
 (setq org-export-with-toc nil)
 #+end_src
 
+** Ручная вставка оглавления (toc)
+
+Автоматическое создание оглавления при экспорте отключено в предыдущем
+параграфе. Однако, можно вставлять вручную оглавление с работающими
+ссылками, если это нужно. Отвечает за это пакет =toc-org= и функция из
+него =toc-org-mode=.
+
+Штука эта работает как с org, так и с markdown.
+
+При включении режима =toc-org-mode= для оглавления достаточно
+поставить заголовку тег =:toc:= и сохранить файл. После этого
+оглавление со ссылками возникнет автоматически:
+: * Оглавление  :toc:
+и также для markdown
+: # Оглавление  :toc:
+
+Настроим автоматическое включение =toc-org-mode= на соответствующие
+режимы.  Переход по markdown-ссылкам в оглавлении повесим на клавиши
+=C-c C-o=.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'markdown-mode)
+(if (require 'toc-org nil t)
+    (progn (add-hook 'org-mode-hook 'toc-org-mode)
+           (add-hook 'markdown-mode-hook 'toc-org-mode)
+           (define-key markdown-mode-map (kbd "C-c C-o")
+               'toc-org-markdown-follow-thing-at-point))
+    (warn "toc-org not found"))
+#+end_src
+
 ** Вычисление babel-блоков при экспорте
 
 Запрещаем вычисление блоков при экспорте.  (Не сбрасывать
