@@ -837,6 +837,12 @@ Ctrl-a - выделение всего текста.
 (setq-default company-dabbrev-downcase nil)
 #+end_src
 
+А автодополнять начнем с двух символов (по-умолчанию три).
+
+#+begin_src emacs-lisp :tangle yes
+(setq company-minimum-prefix-length 2)
+#+end_src
+
 ** Наполнение полезным содержимым ivy-меню
 
 Теперь грузим пакет ivy-rich, который эту красоту и поддерживает.
