@@ -744,7 +744,8 @@ Ctrl-a - выделение всего текста.
 (use-package which-key
     :ensure t
     :config
-    (setq which-key-sort-order 'which-key-key-order-alpha)
+    (setq which-key-sort-order 'which-key-key-order-alpha
+          which-key-sort-uppercase-first nil)
     (which-key-mode 1))
 #+end_src
 
