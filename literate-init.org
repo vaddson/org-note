@@ -1223,6 +1223,20 @@ Dired:
 (setq global-auto-revert-non-file-buffers t)
 #+end_src
 
+** Удаление лишних пробелов при сохранении файла
+
+Удобно, когда при сохранении файла удаляются лишние пробелы в конце
+строк. Так и поступим, но сделаем исключение для /markdown/, поскольку
+там пробелы в конце строк имеют значение.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/delete-trailing-whitespace ()
+    (unless (equal major-mode 'markdown-mode)
+        (delete-trailing-whitespace)))
+
+(add-hook 'before-save-hook #'my/delete-trailing-whitespace)
+#+end_src
+   
 ** Dired. Настройка файлового менеджера
 
 Установим автоматическое обновление содержимого окон Dired.
