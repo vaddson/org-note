@@ -2122,7 +2122,8 @@ text-mode, то он отменит перенос строк. :)
 =C-c C-o=.
 
 #+begin_src emacs-lisp :tangle yes
-(require 'markdown-mode)
+(use-package markdown-mode
+    :ensure t)
 (if (require 'toc-org nil t)
     (progn (add-hook 'org-mode-hook 'toc-org-mode)
            (add-hook 'markdown-mode-hook 'toc-org-mode)
