@@ -2913,16 +2913,32 @@ treemacs при показе текущего файла в дереве про�
 (global-set-key (kbd "C-x g n") #'vc-annotate)
 #+end_src
 
-** Подсветка разницы с HEAD в каждой строке
+** Подсветка разницы с HEAD в каждой строке (git-gutter)
 
 Метки строк по состоянию в Git добавим через пакет =Git-gutter=.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package git-gutter-fringe
-    :ensure t
-    :config
-    (global-git-gutter-mode t)
-    (setq git-gutter:update-interval 1))
+	  :ensure t
+	  :config
+	  ;; (global-git-gutter-mode t)
+      (setq git-gutter:update-interval 1))
+#+end_src
+
+Костыльнем выключение git-gutter-mode для бинарных файлов, иначе он
+замучает вопросами про кодировку.
+
+#+begin_src emacs-lisp :tangle yes
+(add-hook 'find-file-hook
+          (lambda ()
+              (unless (my/--is-current-buffer-binary)
+                  (git-gutter-mode 1))))
+
+(defun my/--is-current-buffer-binary ()
+    (when-let (name (buffer-name))
+        (let ((extension (file-name-extension name)))
+            (or (eq major-mode 'image-mode)
+                (member extension '("gpg" "pdf"))))))
 #+end_src
 
 ** Blamer (смотрелка заголовков последних коммитов в коде)
