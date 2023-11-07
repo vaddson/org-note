@@ -412,7 +412,7 @@ cua-mode в намерении осваивать Emacs.
 (setq scroll-step 1
       scroll-preserve-screen-position t  ;; nil
       scroll-margin 0  ;; 0
-      scroll-conservatively 10  ;; 0
+      scroll-conservatively 10000  ;; 0
       maximum-scroll-margin 0.0  ;; 0.25
       scroll-up-aggressively 0.0   ;; nil
       scroll-down-aggressively 0.0)  ;; nil
