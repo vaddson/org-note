@@ -35,11 +35,12 @@
 1. Для проверки орфографии установите Hunspell.
 2. Для работы с [[https://plantuml.com/][PlantUML]] установите Java и Graphvis.
 3. Для работы с [[https://mermaid.js.org/intro/][Mermaid]] установите mermaid-cli.
-4. Для работы с [[https://www.orgroam.com/][Org-Roam]] (аналог Obsidian) установите Sqlite3.
-5. Для работы с проектами установите Ripgrep.
-6. Для выполнения src-блоков на языке Python установите его.
-7. Аналогично для JavaScript, PHP и Kotlin.
-8. Для работы с LaTeX установите все необходимое.
+4. Для работы с [[http://www.gnuplot.info/][Gnuplot]] установите его на компьютер.
+5. Для работы с [[https://www.orgroam.com/][Org-Roam]] (аналог Obsidian) установите Sqlite3.
+6. Для работы с проектами установите Ripgrep.
+7. Для выполнения src-блоков на языке Python установите его.
+8. Аналогично для JavaScript, PHP и Kotlin.
+9. Для работы с LaTeX установите все необходимое.
    Подробности по установке необходимого в разделах:
    - [[id:14445add-09c5-45ee-a602-77416efe686f]["Экспорт в PDF через LaTeX"]],
    - [[id:fd151894-5620-419e-97be-07770acae549]["LaTeX preview. Формулы прямо в org-тексте"]].
@@ -411,7 +412,7 @@ cua-mode в намерении осваивать Emacs.
 (setq scroll-step 1
       scroll-preserve-screen-position t  ;; nil
       scroll-margin 0  ;; 0
-      scroll-conservatively 10  ;; 0
+      scroll-conservatively 10000  ;; 0
       maximum-scroll-margin 0.0  ;; 0.25
       scroll-up-aggressively 0.0   ;; nil
       scroll-down-aggressively 0.0)  ;; nil
@@ -1925,7 +1926,8 @@ If you use `org' and don't want your org files in the default location below, ch
      (python . t)
      (js . t)
      (php . t)
-	 (kotlin . t)))
+	 (kotlin . t)
+     (gnuplot . t)))
 #+end_src
 
 ** Поддержка показа картинок в результатах выполнения org-babel блоков
@@ -3227,6 +3229,33 @@ Mermaid - это аналог PlantUML. Для работы требует ус�
 #+begin_src emacs-lisp :tangle yes
 (advice-add #'org-babel-execute:mermaid
             :around (my/org-babel-execute mermaid))
+#+end_src
+
+** Gnuplot
+
+Gnuplot рисует графики и диаграммы. Для работы с этим надо установить
+Gnuplot в систему. На Arch это выглядит так:
+: sudo pacman -S gnuplot
+
+Полезные ссылки по установке и использованию:
+- [[https://github.com/emacs-gnuplot/gnuplot][Gnuplot for Emacs]]
+- [[https://orgmode.org/worg/org-contrib/babel/languages/ob-doc-gnuplot.html][Org-babel-gnuplot]]
+- [[https://orgmode.org/worg/org-tutorials/org-plot.html][Plotting tables in Org-Mode using org-plot]]
+- [[https://stackoverflow.com/questions/15736101/is-there-a-way-to-quickly-plot-elisp-functions-with-gnuplot][Is there a way to quickly plot elisp functions with gnuplot?]]
+
+Сделаем установку пакетов для Gnuplot.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package gnuplot
+    :ensure t)
+#+end_src
+
+Настроим параметр :file для gnuplot-блоков по-умолчанию. Если
+параметр :file не указан, то создаем временный файл с картинкой.
+
+#+begin_src emacs-lisp :tangle yes
+(advice-add #'org-babel-execute:gnuplot
+            :around (my/org-babel-execute gnuplot))
 #+end_src
 
 ** Python
