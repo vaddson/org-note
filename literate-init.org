@@ -2659,6 +2659,7 @@ sudo apt install dvipng preview-latex-style
 Загрузка пакета и начальная инициализация.
 
 #+begin_src emacs-lisp :tangle yes
+(provide 'seq-25)
 (use-package org-roam
     :ensure t
     :init
@@ -2849,6 +2850,7 @@ treemacs при показе текущего файла в дереве про�
 Загрузим необходимые пакеты и определим некоторые базовые клавиши.
 
 #+begin_src emacs-lisp :tangle yes
+(provide 'seq-25)
 (use-package magit
     :ensure t
     :config
