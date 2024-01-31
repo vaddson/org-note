@@ -836,8 +836,6 @@ Ctrl-a - выделение всего текста.
     :ensure t)
 (use-package company-box
     :ensure t)
-(use-package company-restclient
-    :ensure t)
 (use-package ivy-hydra
     :ensure t)
 (use-package company-shell
@@ -1894,10 +1892,6 @@ If you use `org' and don't want your org files in the default location below, ch
 	:ensure t)
 (use-package toc-org
 	:ensure t)
-(use-package restclient
-	:ensure t)
-(use-package company-restclient
-	:ensure t)
 (use-package know-your-http-well
 	:ensure t)
 #+end_src
@@ -1907,39 +1901,29 @@ If you use `org' and don't want your org files in the default location below, ch
    :ID:       c98e419e-f7e9-456d-b8f3-5037f0af775b
    :END:
 
-Подгружаем пакеты для запуска скриптов в org-babel блоках.
+Подготовим функцию для регистрации org-babel блока. Как только для
+соответствующего языка будет загружена его поддержка, то эту функцию
+можно будет вызвать:
+: (my/--register-org-babel 'rust)
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/--register-org-babel (type)
+    (let ((langs (cons `(,type . t) org-babel-load-languages)))
+        (org-babel-do-load-languages 'org-babel-load-languages
+                                     langs)))
+#+end_src
+
+А об остальных сущностях позаботимся сейчас. Подгружаем пакеты для
+запуска скриптов в org-babel блоках.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package ob-async
     :ensure t)
-(use-package ob-mermaid
-    :ensure t)
-(require 'ob-shell)
-(use-package ob-go
-    :ensure t)
-(use-package ob-restclient
-    :ensure t)
-(require 'ob-js)
-(use-package ob-php
-    :ensure t)
-(use-package ob-kotlin
-	:ensure t)
-#+end_src
 
-Подскажем редактору, как обрабатывать org-babel блоки.
-Здесь дружим org-babel со всеми установленными языками.
-
-#+begin_src emacs-lisp :tangle yes
 (org-babel-do-load-languages
    'org-babel-load-languages
    '((shell . t)
-     (plantuml . t)
-     (mermaid . t)
-     (python . t)
-     (js . t)
-     (php . t)
-	 (kotlin . t)
-     (gnuplot . t)))
+     ))
 #+end_src
 
 ** Поддержка показа картинок в результатах выполнения org-babel блоков
@@ -3210,6 +3194,12 @@ sudo apt install retext
 ;; ...
 #+end_src
 
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'plantuml)
+#+end_src
+
 UTF-8 - наше всё! :)
 
 #+begin_src emacs-lisp :tangle yes
@@ -3235,12 +3225,43 @@ Mermaid - это аналог PlantUML. Для работы требует ус�
     :ensure t)
 #+end_src
 
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'mermaid)
+#+end_src
+
 Настроим параметр :file для mermaid-блоков по-умолчанию. Если
 параметр :file не указан, то создаем временный файл с картинкой.
 
 #+begin_src emacs-lisp :tangle yes
 (advice-add #'org-babel-execute:mermaid
             :around (my/org-babel-execute mermaid))
+#+end_src
+
+** Restclient
+
+   #+begin_src emacs-lisp :tangle yes
+(use-package restclient
+    :ensure t)
+(use-package company-restclient
+    :ensure t)
+   #+end_src
+
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ob-restclient
+    :ensure t)
+#+end_src
+
+** JavaScript
+
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(require 'ob-js)
+(my/--register-org-babel 'js)
 #+end_src
 
 ** Gnuplot
@@ -3262,6 +3283,12 @@ Gnuplot в систему. На Arch это выглядит так:
     :ensure t)
 #+end_src
 
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'gnuplot)
+#+end_src
+
 Настроим параметр :file для gnuplot-блоков по-умолчанию. Если
 параметр :file не указан, то создаем временный файл с картинкой.
 
@@ -3281,6 +3308,12 @@ Gnuplot в систему. На Arch это выглядит так:
     :ensure t)
 #+end_src
 
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'python)
+#+end_src
+
 ** PHP
 
 Здесь только подсветка кода.
@@ -3290,11 +3323,23 @@ Gnuplot в систему. На Arch это выглядит так:
     :ensure t)
 #+end_src
 
-** Konlin
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'php)
+#+end_src
+
+** Kotlin
 
 Здесь только подсветка кода.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package kotlin-mode
     :ensure t)
+#+end_src
+
+Позаботимся о вычислении org-babel блоков.
+
+#+begin_src emacs-lisp :tangle yes
+(my/--register-org-babel 'kotlin)
 #+end_src
