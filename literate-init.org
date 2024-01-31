@@ -218,6 +218,18 @@ email clients, file templates and snippets."
 (setq mode-line-position (list "(%l,%C)"))
 #+end_src
 
+** Красивая статусная панель Doom-modeline
+
+Выглядит красиво, новичков пугает меньше.
+Установим.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package doom-modeline
+    :ensure t
+    :init
+    (doom-modeline-mode 1))
+#+end_src
+
 ** Показ объекта внутри которого находится курсор (header-line)
 
 Часто бывает нужно посмотреть, в каком объекте находится курсор. Это
