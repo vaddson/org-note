@@ -1177,10 +1177,11 @@ Imenu - дает не только удобный способ навигаци�
          (display-buffer-reuse-window)
          (window-width . 0.30))
 
-        ;; org-mode
+        ;; org-roam-mode
         ("^\\*org-roam\\*$"
          (display-buffer-reuse-window display-buffer-in-side-window)
-         (window-height . 0.5))
+         (side . right)
+         (window-width . 0.35))
 
         ;; Magit (status)
         ("^magit: .*"
@@ -2652,7 +2653,8 @@ sudo apt install dvipng preview-latex-style
 (my/set-org-todo-keywords)
 #+end_src
 
-** Org-roam
+* Org-roam
+** Установка
 
 Загрузка пакета и начальная инициализация.
 
@@ -2662,15 +2664,92 @@ sudo apt install dvipng preview-latex-style
     :ensure t
     :init
     (setq org-roam-directory (file-truename "~/org/roam/"))
-    (make-directory org-roam-directory t)
+    (mkdir org-roam-directory t)
     (setq org-roam-v2-ack t)
     (setq org-roam-database-connector 'sqlite)
-    (mkdir org-roam-directory t)
     :config
     (add-hook 'org-roam-mode-hook #'my/set-word-wrap)
-    (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
-    (org-roam-db-autosync-mode)
+    (setq org-roam-node-display-template (concat (propertize "${tags:40}  " 'face 'org-tag) "${title:*} "))
+    ;; (setq org-roam-node-display-template (concat "${title:*} " (propertize "${tags:10}" 'face 'org-tag)))
+    (org-roam-db-autosync-mode 1)
     (require 'org-roam-protocol))
+#+end_src
+
+Поработаем над буфером показа ссылок на открытую карточку. Исключим
+повторяющиеся ссылки. Введем фильтр по тегам с простой логикой:
+: tag1 tag2 !tag3
+означает: содержит теги "tag1" и "tag2" и не содержит "tag3".
+
+Также разделим фильтр на две части, положительную и отрицательную,
+посредством символа `~'.  На все, что останется за `~', будет наложено
+отрицание:
+: tag1 !tag2 ~ tag3 !tag4
+Это нужно для применения 'or' логики вместо 'and'. Пример фильтра, где
+нужен или "tag1", или "tag2", или оба сразу:
+: ~ !tag1 !tag2
+Наворачивать что-то более сложное пока не вижу смысла. :)
+
+Логику эту будем держать строкой в переменной my/org-roam--filter-tags.
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-roam-mode-sections '(my/org-roam--filter-tags-section
+                               (org-roam-backlinks-section
+                                :unique t
+                                :show-backlink-p my/org-roam--show-backlink-by-tags-p)
+                               org-roam-reflinks-section))
+
+(defvar my/org-roam--filter-tags ""
+  "String with tags separated by spaces.
+To inverse filter logic use '!' before tag:
+    'tag1 tag2 !tag3'
+To split positive and negative parts use '~' char:
+    'tag1 !tag2 ~ tag3 !tag4'
+For example: 'or' logic instead of 'and' logic:
+    '~ !tag1 !tag2'")
+
+(defun my/org-roam--filter-tags-section (node)
+    (when (not (string-empty-p my/org-roam--filter-tags))
+        (magit-insert-section (org-roam-backlinks)
+            (magit-insert-heading (concat "FILTER: "
+                                          my/org-roam--filter-tags)))))
+
+(defun my/org-roam--show-backlink-by-tags-p (backlink)
+    (let* ((parts (split-string my/org-roam--filter-tags "~"))
+           (part-positive (string-trim (car parts)))
+           (part-negative (string-trim (string-join (cdr parts) " ")))
+           (tags-positive (split-string part-positive))
+           (tags-negative (split-string part-negative))
+           (node (org-roam-backlink-source-node backlink))
+           (node-tags (org-roam-node-tags node)))
+        (and (my/org-roam--check-tags tags-positive node-tags nil)
+             (my/org-roam--check-tags tags-negative node-tags t))))
+
+(defun my/org-roam--check-tags (tags node-tags is-not)
+    (or (not tags)
+        (xor is-not
+             (reduce (lambda (a b)
+                         (and a b))
+                     (mapcar (lambda (tag-name)
+                                 (my/org-roam--tag-member tag-name node-tags))
+                             tags)))))
+
+(defun my/org-roam--tag-member (tag-name tags)
+    (if (string-prefix-p "!" tag-name)
+        (not (member (substring tag-name 1) tags))
+        (member tag-name tags)))
+#+end_src
+
+Для работы с фильтрами по тегам осталось сделать ввод значения
+для my/org-roam--filter-tags и обновить буфер "*org-roam*".
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-filter-backlinks-by-tags (tags-string)
+	(interactive (list (read-string "Enter tags: "
+                                    my/org-roam--filter-tags)))
+    (setq my/org-roam--filter-tags tags-string)
+    (when-let ((buffer (get-buffer org-roam-buffer)))
+        (with-current-buffer buffer
+            (org-roam-buffer-refresh))))
 #+end_src
 
 Переопределим реакцию по нажатию Enter на раздел в org-roam-mode.
@@ -2702,34 +2781,313 @@ sudo apt install dvipng preview-latex-style
                            (not org-roam-window))))
         (if new-tab-p
             (progn (tab-new)
-                   (org-roam-node-find)
+                   (my/hack-dir-locals)
+                   (org-roam-node-find (my/org-roam--same-window-p))
                    (delete-other-windows))
-            (org-roam-node-find))
-        (unless (get-buffer-window org-roam-buffer)
-            (org-roam-buffer-toggle))))
+            (progn (my/hack-dir-locals)
+                   (org-roam-node-find (my/org-roam--same-window-p))))))
+        ;; (unless (get-buffer-window org-roam-buffer)
+        ;;     (org-roam-buffer-toggle))))
+
+(defun my/org-roam-node-insert ()
+    (interactive)
+    (my/hack-dir-locals)
+    (org-roam-node-insert)
+    ;; (unless (get-buffer-window org-roam-buffer)
+    ;;     (org-roam-buffer-toggle))
+    )
 
 (defun my/org-roam-buffer-toggle ()
     (interactive)
+    (my/hack-dir-locals)
     (org-roam-buffer-toggle)
     (when (get-buffer-window org-roam-buffer)
         (when-let ((buffer (get-buffer org-roam-buffer)))
             (switch-to-buffer-other-window buffer))))
+
+(defun my/org-roam--same-window-p ()
+    (if (get-buffer-window org-roam-buffer)
+        nil
+        t))
+
+(defun my/hack-dir-locals ()
+    (hack-dir-local-variables)
+    (hack-dir-local-variables-non-file-buffer))
 #+end_src
 
 Горячие клавиши.
 
 #+begin_src emacs-lisp :tangle yes
-(global-set-key (kbd "C-c r r") #'my/org-roam-buffer-toggle)
-(global-set-key (kbd "C-c r f") #'my/org-roam-node-find)
-(define-key org-mode-map (kbd "C-c r i") #'org-roam-node-insert)
-(global-set-key (kbd "C-c r c") #'org-roam-capture)
-(global-set-key (kbd "C-c r j") #'org-roam-dailies-capture-today)
-(define-key org-mode-map (kbd "C-c r a a") #'org-roam-alias-add)
-(define-key org-mode-map (kbd "C-c r d a") #'org-roam-alias-remove)
-(define-key org-mode-map (kbd "C-c r a r") #'org-roam-ref-add)
-(define-key org-mode-map (kbd "C-c r d r") #'org-roam-ref-remove)
-(define-key org-mode-map (kbd "C-c r a t") #'org-roam-tag-add)
-(define-key org-mode-map (kbd "C-c r d t") #'org-roam-tag-remove)
+(global-set-key (kbd "C-c r s") 'org-roam-db-sync)
+(global-set-key (kbd "C-c r r") 'my/org-roam-buffer-toggle)
+(global-set-key (kbd "C-c r f") 'my/org-roam-node-find)
+(define-key org-mode-map (kbd "C-c r i") 'org-roam-node-insert)
+(global-set-key (kbd "C-c r c") 'org-roam-capture)
+(global-set-key (kbd "C-c r j") 'org-roam-dailies-capture-today)
+(global-set-key (kbd "C-c r J") 'org-roam-dailies-capture-date)
+(global-set-key (kbd "C-c r t") 'my/org-roam-filter-backlinks-by-tags)
+(global-set-key (kbd "C-c r q") 'org-roam-ql-search)
+(global-set-key (kbd "C-c r o") 'my/org-roam-convert-to-node)
+(global-set-key (kbd "C-c r n") 'my/org-roam-show-vault-dir)
+(global-set-key (kbd "C-c r v i") 'my/org-roam-vault-init)
+(global-set-key (kbd "C-c r v s") 'my/org-roam-register-vault-subdirectory)
+(define-key org-mode-map (kbd "C-c r a a") 'org-roam-alias-add)
+(define-key org-mode-map (kbd "C-c r d a") 'org-roam-alias-remove)
+(define-key org-mode-map (kbd "C-c r a r") 'org-roam-ref-add)
+(define-key org-mode-map (kbd "C-c r d r") 'org-roam-ref-remove)
+(define-key org-mode-map (kbd "C-c r a t") 'org-roam-tag-add)
+(define-key org-mode-map (kbd "C-c r d t") 'org-roam-tag-remove)
+#+end_src
+
+** Шаблоны
+   :PROPERTIES:
+   :ID:       eb0ed05e-acc3-40b7-afd2-0cbf8f8e0ad7
+   :CUSTOM_ID: eb0ed05e-acc3-40b7-afd2-0cbf8f8e0ad7
+   :END:
+
+Для удобства соберем все шаблоны в одном параграфе. Сначала сделаем
+шаблоны для хранилища по-умолчанию.
+
+Для основных документов вставим дату в поле `#+date:'.
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-roam-capture-templates
+      `(("d" "default" plain "%?"
+             :target
+             (file+head "main-roam/%<%Y%m%d%H%M%S>-${slug}.org"
+                        ,(concat "#+title: ${title}" "\n"
+                                 "#+date: %<%Y-%m-%d>" "\n"
+                                 "#+filetags: :@main:" "\n"))
+             :empty-lines-before 1
+             :unnarrowed t)))
+#+end_src
+
+Настроим тег файла =@daily= для daily-заметок, чтобы можно было
+фильтровать по ним. Тег заголовкам =@unsorted= тоже ставим
+по-умолчанию - предполагаем, что он будет снят после проработки текста
+заметки. Сами заголовки делаем отдельными узлами. А еще добавим время
+создания заголовка (думаю, это может иногда пригодиться).
+
+#+begin_src emacs-lisp :tangle yes
+(setq org-roam-dailies-capture-templates
+      `(("d" "default"
+             entry ,(concat "* (%<%H:%M>) %? :@unsorted:" "\n"
+                            "${my/org-roam--id-copy}" "\n")
+             :target
+             (file+head "%<%Y-%m-%d>.org"
+                        ,(concat "#+title: %<%Y-%m-%d>" "\n"
+                                 "#+startup: content" "\n"
+                                 "#+filetags: :@daily:" "\n"))
+             :empty-lines-before 1)))
+
+(defun my/org-roam--id-copy (node)
+    (let ((node-id (org-id-new))
+          (level "  "))
+        (concat level ":PROPERTIES:" "\n"
+                level ":ID: " node-id "\n"
+                level ":CUSTOM_ID: " node-id "\n"
+                level ":END:")))
+#+end_src
+
+Переходим к шаблонам для инициализации хранилищ в других директориях.
+
+Загоним все содержимое будущих .dir-locals.el в шаблон. Здесь вносим
+код для изменения путей к хранилищу, а шаблоны копируем из основных.
+
+#+begin_src emacs-lisp :tangle yes
+(defvar my/org-roam-vault-dir-locals
+  `((nil . ((eval
+             . (setq-local org-roam-directory
+                           (expand-file-name (locate-dominating-file
+                                              default-directory ".dir-locals.el"))))
+            (eval
+             . (setq-local org-roam-db-location
+                           (expand-file-name "org-roam.db" org-roam-directory)))
+            (eval
+             . (setq-local org-id-locations-file
+                           (expand-file-name ".org-id-locations" org-roam-directory)))
+            (org-roam-dailies-capture-templates
+             . ,org-roam-dailies-capture-templates)
+            (org-roam-capture-templates
+             . ,org-roam-capture-templates)))))
+#+end_src
+
+Для создания заметок в поддиректориях заведем теги с именем этих
+поддиректорий. Это поможет быстро фильтровать заметки по содержимому
+поддиректорий. Также в шаблоне потребуется буква ключ для меню
+создания заметки, и этот ключ должен быть уникальным. Выбор буквы для
+ключа автоматизируем.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam--make-subdirectory-template (subdirectory-name)
+    (let* ((subdirectory-name (string-replace " " "-" subdirectory-name))
+           (occupied-keys (mapcar 'car org-roam-capture-templates))
+           (key (my/org-roam--choose-directory-key subdirectory-name
+                                                   occupied-keys))
+           (template-file-name (my/org-roam--make-template-file subdirectory-name
+                                                                key)))
+        `(,key
+          ,subdirectory-name
+          plain (file ,template-file-name)
+          :target
+          (file+head ,(concat subdirectory-name "/%<%Y%m%d%H%M%S>-${slug}.org")
+                     ,(concat "#+title: ${title}" "\n"
+                              "#+date: %<%Y-%m-%d>" "\n"
+                              "#+filetags: :@" subdirectory-name ":" "\n"))
+          :unnarrowed t
+          :empty-lines-before 1)))
+
+(defun my/org-roam--choose-directory-key (directory-name occupied-keys)
+    (let* ((occupied-keys (append occupied-keys '(" " "/" "-" "_")))
+           (reversed-path (apply 'concat
+                                 (reverse (split-string directory-name "/"))))
+           (dir-name-letters (my/org-roam--split-by-letters reversed-path))
+           (dir-and-letters (append dir-name-letters
+                                    (my/org-roam--minus-list my/org-roam--letters
+                                                             dir-name-letters)))
+           (result (my/org-roam--minus-list dir-and-letters
+                                            occupied-keys)))
+        (if result (car result) "X")))
+
+(defun my/org-roam--split-by-letters (text)
+    (mapcar 'char-to-string
+            (string-to-list text)))
+
+(defconst my/org-roam--letters
+  (my/org-roam--split-by-letters (concat "abcdefghijklmnopqrstuvwxyz"
+                                         "ABCDEFGHIJKLMNOPQRSTUVWXYZ")))
+
+(defun my/org-roam--minus-list (list-1 list-2)
+    (seq-filter (lambda (x)
+                    (not (member x list-2)))
+                list-1))
+
+(defun my/org-roam--make-template-file (subdirectory-name key)
+    (let* ((subdirectory-name (string-replace "/" "--" subdirectory-name))
+           (template-file-name-expand (concat org-roam-directory
+                                              "/templates/"
+                                              subdirectory-name
+                                              "(" key ")" ".org"))
+           (template-file-name (replace-regexp-in-string (concat "^" (getenv "HOME"))
+                                                         "~"
+                                                         template-file-name-expand)))
+        (make-empty-file template-file-name t)
+        template-file-name))
+#+end_src
+
+** Поддержка работы в разных хранилищах (vault) и разных поддиректориях (subdirectory)
+
+Здесь собираются настройки необходимые для работы с разными базами
+(хранилицами) для Org-Roam.  Базы не должны пересекаться, поскольку
+одна может быть для работы, другая для - личной картотекой и т.п..
+
+Чтобы меньше путаться, в каком хранилище сейчас находимся, напишем
+вывод в минибуфер директории текущего хранилища.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-show-vault-dir ()
+    (interactive)
+    (message (concat "Current vault: "
+                     (my/org-roam--pretty-path org-roam-directory))))
+
+(defun my/org-roam--pretty-path (path)
+    (replace-regexp-in-string (concat "^" (getenv "HOME"))
+                              "~"
+                              path))
+#+end_src
+
+Инициализировать хранилища будем, как указано в официальной
+документации: "50.2.5 Per-Directory Local Variables".
+
+Инициализация состоит в создании в директории будущего хранилища
+файлика .dir-locals.el. В нем укажем все необходимое для работы с
+Org-Roam. Для этого весь код по созданию файлика с полезным содержимым
+перенесем в функцию.
+
+Но пополнять содержимое .dir-locals.el будем через фцнкцию
+add-dir-local-variable, так мы не нарушим другие данные в
+.dir-locals.el. Заниматься инициализацией хранилища будет функция
+my/org-roam-vault-init.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-vault-init (org-roam-vault-path)
+    (interactive "DDirectory for Org-Roam vault: ")
+    (find-file org-roam-vault-path)
+    (when (yes-or-no-p (concat "Do your want to init a vault in '"
+                               (my/org-roam--pretty-path org-roam-vault-path)
+                               "'? "))
+        (my/org-roam--fill-dir-locals my/org-roam-vault-dir-locals)
+        (my/org-roam--save-dir-locals-and-show-the-buffer org-roam-vault-path)
+        (make-directory (concat org-roam-vault-path
+                                "/" org-roam-dailies-directory)
+                        t)
+        (org-roam-db-sync)))
+
+(defun my/org-roam--fill-dir-locals (dir-locals)
+    (mapc (lambda (mode-vars)
+              (let ((mode (car mode-vars))
+                    (variables (cdr mode-vars)))
+                  (my/org-roam--add-dir-local-variables mode variables)))
+          dir-locals))
+
+(defun my/org-roam--add-dir-local-variables (mode variables)
+    (mapc (lambda (var-val)
+              (add-dir-local-variable mode (car var-val) (cdr var-val)))
+          (reverse variables)))
+
+(defun my/org-roam--save-dir-locals-and-show-the-buffer (org-roam-vault-path)
+    (let ((dir-locals-name ".dir-locals.el")
+          (current-buffer-name (buffer-name)))
+        (when (eq (compare-strings current-buffer-name 0 (length dir-locals-name)
+                                   dir-locals-name nil nil)
+                  t)
+            (save-buffer))))
+            ;; (kill-buffer current-buffer-name)
+            ;; (find-file org-roam-vault-path))))
+#+end_src
+
+Далее будем шаманить с добавлением поддиректорий. Вручную
+регистрировать поддиректорию долго. Это в основном из-за того, что
+приходится вспоминать, как это делать.
+
+Для упрощения работы с поддиректориями заведем шаблон и функцию,
+которая будет добавлять его в Org-Roam.
+
+Шаблон будет содержать тег с названием поддиректории, а буква-ключ
+выбирается автоматом (по-возможности из букв имени поддиректории.
+Все это собираем в функцию [[id:eb0ed05e-acc3-40b7-afd2-0cbf8f8e0ad7][my/org-roam--make-subdirectory-template]].
+
+Теперь сделаем функцию, которая в хранилище регистрирует поддиректорию
+по одному только ее названию.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-register-vault-subdirectory (subdirectory-name)
+    (interactive
+     (list (read-string (concat "Enter subdirectory name for vault '"
+                                (my/org-roam--pretty-path org-roam-directory)
+                                "': "))))
+    (find-file org-roam-directory)
+    (my/org-roam--fill-dir-locals
+     `((nil . ((org-roam-capture-templates
+                . ,(cons (my/org-roam--make-subdirectory-template subdirectory-name)
+                         org-roam-capture-templates))))))
+    (find-file (concat org-roam-directory "/.dir-locals.el"))
+    (my/org-roam--save-dir-locals-and-show-the-buffer org-roam-directory))
+#+end_src
+
+#+RESULTS:
+: my/org-roam-register-vault-subdirectory
+
+Ниже напишем код для превращения обычного файла в узел Org-Roam. Для
+этого надо в его начало поместить свойство ~:ID:~.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/org-roam-convert-to-node ()
+    (interactive)
+    (goto-char 0)
+    (insert (concat ":PROPERTIES:" "\n"
+                    ":ID: " (org-id-new) "\n"
+                    ":END:" "\n")))
 #+end_src
 
 ** Org-roam-ui
@@ -2766,6 +3124,9 @@ sudo apt install dvipng preview-latex-style
     [menu-bar org-roam ui-mode]
     '("Show UI Graph" . org-roam-ui-mode))
 (define-key global-map
+    [menu-bar org-roam dailies-capture-date]
+    '("Dailies Capture Date" . org-roam-dailies-capture-date))
+(define-key global-map
     [menu-bar org-roam dailies-capture-today]
     '("Dailies Capture Today" . org-roam-dailies-capture-today))
 (define-key global-map
@@ -2780,9 +3141,24 @@ sudo apt install dvipng preview-latex-style
 (define-key global-map
     [menu-bar org-roam node-find]
     '("Find Node" . my/org-roam-node-find))
+(define-key global-map
+    [menu-bar org-roam db-sync]
+    '("Sync org-roam database" . org-roam-db-sync))
+
+(define-key-after global-map [menu-bar org-roam vault]
+    (cons "Vault" (make-sparse-keymap "Org-Roam")) 'dailies-capture-date)
+(define-key global-map
+    [menu-bar org-roam vault register-sub-directory]
+    '("Register subdirectory" . my/org-roam-register-vault-subdirectory))
+(define-key global-map
+    [menu-bar org-roam vault init]
+    '("Initialize vault directory" . my/org-roam-vault-init))
+(define-key global-map
+    [menu-bar org-roam vault show-dir]
+    '("Show vault directory" . my/org-roam-show-vault-dir))
 
 (define-key-after global-map [menu-bar org-roam tag]
-    (cons "Tag" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+    (cons "Tag" (make-sparse-keymap "Org-Roam")) 'dailies-capture-date)
 (define-key global-map
     [menu-bar org-roam tag remove]
     '("Remove" . org-roam-tag-remove))
@@ -2791,7 +3167,7 @@ sudo apt install dvipng preview-latex-style
     '("Add" . org-roam-tag-add))
 
 (define-key-after global-map [menu-bar org-roam ref]
-    (cons "Ref" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+    (cons "Ref" (make-sparse-keymap "Org-Roam")) 'dailies-capture-date)
 (define-key global-map
     [menu-bar org-roam ref remove]
     '("Remove" . org-roam-ref-remove))
@@ -2800,13 +3176,257 @@ sudo apt install dvipng preview-latex-style
     '("Add" . org-roam-ref-add))
 
 (define-key-after global-map [menu-bar org-roam alias]
-    (cons "Alias" (make-sparse-keymap "Org-Roam")) 'dailies-capture-today)
+    (cons "Alias" (make-sparse-keymap "Org-Roam")) 'dailies-capture-date)
 (define-key global-map
     [menu-bar org-roam alias remove]
     '("Remove" . org-roam-alias-remove))
 (define-key global-map
     [menu-bar org-roam alias add]
     '("Add" . org-roam-alias-add))
+#+end_src
+
+** Org-roam-db-query (только информация)
+
+Здесь размещу только информацию о строении БД для Org-Roam, чтобы ее
+не искать и не собирать.
+
+Так можно делать SQL-запросы на elisp в БД Org-Roam.
+#+begin_example emacs-lisp
+(org-roam-db-query [:select * :from nodes])
+(org-roam-db-query [:select :distinct [type] :from links])
+#+end_example
+
+Теперь о том, что запрашивать. :) Сперва о том, какие таблицы есть в БД:
+
+- aliases ::
+  #+begin_src sql :eval no
+  CREATE TABLE aliases (node_id NOT NULL,
+                        alias,
+                        FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE);
+  CREATE INDEX alias_node_id ON aliases (node_id );
+  #+end_src
+- citations ::
+  #+begin_src sql :eval no
+  CREATE TABLE citations (node_id NOT NULL,
+                          cite_key NOT NULL,
+                          pos NOT NULL,
+                          properties,
+                          FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE);
+  #+end_src
+- files ::
+  #+begin_src sql :eval no
+  CREATE TABLE files (file UNIQUE PRIMARY KEY,
+                      title,
+                      hash NOT NULL,
+                      atime NOT NULL,
+                      mtime NOT NULL);
+  #+end_src
+- links ::
+  #+begin_src sql :eval no
+  CREATE TABLE links (pos NOT NULL,
+                      source NOT NULL,
+                      dest NOT NULL,
+                      type NOT NULL,
+                      properties NOT NULL,
+                      FOREIGN KEY (source) REFERENCES nodes (id) ON DELETE CASCADE);
+  #+end_src
+  А вот какие типы ссылок бывают (целиком определяются по инструкции к Org):
+  |--------+---------------------------------------------------|
+  | Тип    | Комментарий                                       |
+  |--------+---------------------------------------------------|
+  | elisp  |                                                   |
+  | file   |                                                   |
+  | fuzzy  |                                                   |
+  | https  |                                                   |
+  | http   |                                                   |
+  | id     | На этом типе Org-Roam строит ссылки между узлами. |
+  | info   |                                                   |
+  | mailto |                                                   |
+  |--------+---------------------------------------------------|
+- nodes ::
+  #+begin_src sql :eval no
+  CREATE TABLE nodes (id NOT NULL PRIMARY KEY,
+                      file NOT NULL,
+                      level NOT NULL,
+                      pos NOT NULL,
+                      todo,
+                      priority,
+                      scheduled text,
+                      deadline text,
+                      title,
+                      properties,
+                      olp,
+                      FOREIGN KEY (file) REFERENCES files (file) ON DELETE CASCADE);
+  #+end_src
+- refs ::
+  #+begin_src sql :eval no
+  CREATE TABLE refs (node_id NOT NULL,
+                     ref NOT NULL,
+                     type NOT NULL,
+                     FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE);
+  CREATE INDEX refs_node_id ON refs (node_id );
+  #+end_src
+- tags ::
+  #+begin_src sql :eval no
+  CREATE TABLE tags (node_id NOT NULL,
+                     tag,
+                     FOREIGN KEY (node_id) REFERENCES nodes (id) ON DELETE CASCADE);
+  CREATE INDEX tags_node_id ON tags (node_id );
+  #+end_src
+
+** Org-ql. Поиск по org-файлам
+
+Строим запросы по org сродни SQL. Может использоваться, как бэкэнд для
+показа агенды.
+
+#+begin_src emacs-lisp :tangle yes
+(provide 'seq-25)
+(use-package org-ql
+    :quelpa (org-ql :fetcher github :repo "alphapapa/org-ql"
+                    :files (:defaults (:exclude "helm-org-ql.el"))))
+(use-package helm-org-ql
+    :quelpa (helm-org-ql :fetcher github :repo "alphapapa/org-ql"
+                         :files ("helm-org-ql.el")))
+#+end_src
+
+** Org-roam-ql. Поиск по файлам org-roam
+
+Выглядит перспективно:
+- https://github.com/ahmed-shariff/org-roam-ql
+
+_Пример_ использования (общий select):
+#+begin_example emacs-lisp
+(org-roam-ql-nodes '([:select [id] :from nodes]))
+#+end_example
+
+_Пример_ использования с поиском (результат выведет в отдельном окне):
+#+begin_example emacs-lisp
+(org-roam-ql-search '(and (todo "TODO") (tags "tag1" "tag2") "*org-roam*"))
+#+end_example
+Функция =org-roam-ql-search= повешена на горячие клавиши.
+
+_Пример_ для памяти с динамическим блоком. Табличка внутри begin/end
+заполнится сама:
+: #+begin: org-roam-ql :query (todo "DONE") :columns (title tags) :take 5 :no-link nil
+: |     | Title | Tags |
+: |-----+-------+------|
+: | ... | ...   | ...  |
+: #+end:
+
+Ниже (опять для памяти) описание параметров динамического блока из
+документации:
+
+Similar to org-ql, org-roam-ql also provides a dynamic block. The
+header parameters are as follows:
+- ~:query~ - A valid SOURCE-OR-QUERY
+- ~:columns~ - A list of columns to display. Each column name is a slot
+  name of org-roam-nodes. For any function/accessor with a name of the
+  form org-roam-node-<name>, which takes an org-roam-node as a
+  parameter, <name> can also be used column name. For example, if
+  there is a function named org-roam-node-short-title, short-title can
+  be used as a column name, this will result in a column with the
+  title short-title where the content of each row is the result of
+  calling the respective function.
+- ~:sort~ - Name of a registered sort functions. See org-roam-ql-search
+  for more info on the values for sort functions.
+- ~:take~ (optional) - If a positive integer N, take the first N
+  elements, if a negative -N, take the last N nodes.
+- ~:no-link~ (optional) - If a non-nil value is set, the first column
+  containing the links will be dropped.
+If no-link is not provided as a parameter, the first column is a link
+to the node. Since it is an id link, it will be a backlink to the
+node.
+
+Сейчас работают следующие функции сортировки (параметр ~:sort~) в
+динамических блоках:
+#+begin_src emacs-lisp :tangle no :colnames '("Функция сортировки" Комментарий) :exports results :hidden
+(mapcar (lambda (dict)
+            `(,(symbol-name (plist-get dict :symbol))
+              ,(plist-get dict :description)))
+        my/org-roam--sort-fn-list)
+#+end_src
+
+#+RESULTS:
+| Функция сортировки | Комментарий                 |
+|--------------------+-----------------------------|
+| title              | Sort by title.              |
+| title-r            | Reverse sort by title.      |
+| file-mtime         | Sort by file mtime.         |
+| file-mtime-r       | Reverse sort by file mtime. |
+| file-atime         | Sort by file atime.         |
+| file-atime-r       | Recerse sort by file atime. |
+| file-title         | Sort by file title.         |
+| file-title-r       | Reverse sort by file title. |
+
+Устанавливаем эту хорошую штуку.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam-ql
+    :ensure t
+    :after (org-roam))
+#+end_src
+
+#+begin_src emacs-lisp :tangle yes
+(use-package org-roam-ql-ql
+    :ensure t
+    :after (org-ql org-roam-ql)
+    :config
+    (org-roam-ql-ql-init))
+#+end_src
+
+Настройка функций сортировки.
+
+#+begin_src emacs-lisp :tangle yes
+(setq my/org-roam--sort-fn-list
+      '((:symbol title
+         :description "Sort by title."
+         :predicate (lambda (node1 node2)
+                        (string< (org-roam-node-title node1)
+                                 (org-roam-node-title node2))))
+        (:symbol title-r
+         :description "Reverse sort by title."
+         :predicate (lambda (node1 node2)
+                        (not (string< (org-roam-node-title node1)
+                                      (org-roam-node-title node2)))))
+        (:symbol file-mtime
+         :description "Sort by file mtime."
+         :predicate (lambda (node1 node2)
+                        (my/time< (org-roam-node-file-mtime node1)
+                                  (org-roam-node-file-mtime node2))))
+        (:symbol file-mtime-r
+         :description "Reverse sort by file mtime."
+         :predicate (lambda (node1 node2)
+                        (not (my/time< (org-roam-node-file-mtime node1)
+                                       (org-roam-node-file-mtime node2)))))
+        (:symbol file-atime
+         :description "Sort by file atime."
+         :predicate (lambda (node1 node2)
+                        (my/time< (org-roam-node-file-atime node1)
+                                  (org-roam-node-file-atime node2))))
+        (:symbol file-atime-r
+         :description "Recerse sort by file atime."
+         :predicate (lambda (node1 node2)
+                        (not (string< (org-roam-node-file-atime node1)
+                                      (org-roam-node-file-atime node2)))))
+        (:symbol file-title
+         :description "Sort by file title."
+         :predicate (lambda (node1 node2)
+                        (string< (org-roam-node-file-title node1)
+                                 (org-roam-node-file-title node2))))
+        (:symbol file-title-r
+         :description "Reverse sort by file title."
+         :predicate (lambda (node1 node2)
+                        (not (string< (org-roam-node-file-title node1)
+                                      (org-roam-node-file-title node2)))))
+        ))
+
+(defun my/time< (time1 time2)
+    (string< (format-time-string "%Y-%m-%dT%H:%M:%S" time1)
+             (format-time-string "%Y-%m-%dT%H:%M:%S" time2)))
+
+(dolist (dict my/org-roam--sort-fn-list)
+    (org-roam-ql-register-sort-fn (plist-get dict :symbol)
+                                  (plist-get dict :predicate)))
 #+end_src
 
 * Инструменты внешние

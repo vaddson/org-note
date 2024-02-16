@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: org-roam-ql
+# key: _ql
+# --
+$0#+begin: org-roam-ql :query (${1:}) :columns (${2:title tags}) :sort ${3:title} :take ${4:nil} :no-link ${5:nil}
+#+end:

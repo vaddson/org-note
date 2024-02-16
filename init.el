@@ -23,6 +23,11 @@
     (progn (package-refresh-contents)
            (package-install 'use-package)))
 
+;; Подцепим работу с qelpa.
+(use-package quelpa-use-package
+    :ensure t)
+(require 'quelpa-use-package)
+
 ;; Установим темы заранее для того, чтобы загружать их через customize.
 (use-package doom-themes
     :ensure t)
