@@ -2654,6 +2654,38 @@ sudo apt install dvipng preview-latex-style
 #+end_src
 
 * Org-roam
+
+Org-roam - это система организации заметок, аналог таких систем, как
+Obsidian. Базовые настройки выглядят более-менее одинаково, но по
+факту каждый пользователь Emacs в итоге превращает Org-roam в свою
+отдельную систему организации заметок.
+
+Заметки можно размещать в одной директории, организуя связи только
+гиперссылками и тегами, а можно использовать иерархию
+поддиректорий. Можно даже представить заголовки ORG-файлов, как
+отдельные заметки, которые наследуют свойства и теги от своего
+родительского файла. Org-roam это все позволяет "из коробки", хоть в
+документации не считает нужным про то упоминать.
+
+Поскольку данная конфигурация рассчитана на новичка, то настройки
+Org-roam сделаю такими, какими они прижились у меня в боевой
+обстановке. Например, здесь реализована потребность в работе с разными
+базами знаний, которые никак друг с другом не пересекаются (как то
+база знаний по работе и личная википедия). Называются они здесь, как в
+Obsidian, - =vault=, т.е. хранилище.
+
+Также сделана автоматическое создание поддиректорий со своим названием
+и файликом шаблона в общей папке =templates=, который можно
+подредактировать.
+
+Работа с =daily= тоже подправлена под концепцию: наспех заводим
+daily-заметку, она автоматом помечается тегом "@unsorted". Когда
+работа с daily-заметкой будет проведена, тег "@unsorted" можно
+снять. Ну и все daily-заметки автоматом получают тег "@daily".
+
+Еще в окне обратных ссылок добавлена фильтрация по тегам. Ее логика
+описана в следующем параграфе.
+
 ** Установка
 
 Загрузка пакета и начальная инициализация.
@@ -2710,7 +2742,7 @@ For example: 'or' logic instead of 'and' logic:
 (defun my/org-roam--filter-tags-section (node)
     (when (not (string-empty-p my/org-roam--filter-tags))
         (magit-insert-section (org-roam-backlinks)
-            (magit-insert-heading (concat "FILTER: "
+            (magit-insert-heading (concat "TAG FILTER: "
                                           my/org-roam--filter-tags)))))
 
 (defun my/org-roam--show-backlink-by-tags-p (backlink)
@@ -2827,7 +2859,7 @@ For example: 'or' logic instead of 'and' logic:
 (global-set-key (kbd "C-c r J") 'org-roam-dailies-capture-date)
 (global-set-key (kbd "C-c r t") 'my/org-roam-filter-backlinks-by-tags)
 (global-set-key (kbd "C-c r q") 'org-roam-ql-search)
-(global-set-key (kbd "C-c r o") 'my/org-roam-convert-to-node)
+(define-key org-mode-map (kbd "C-c r o") 'my/org-roam-convert-to-node)
 (global-set-key (kbd "C-c r n") 'my/org-roam-show-vault-dir)
 (global-set-key (kbd "C-c r v i") 'my/org-roam-vault-init)
 (global-set-key (kbd "C-c r v s") 'my/org-roam-register-vault-subdirectory)
@@ -3129,6 +3161,15 @@ my/org-roam-vault-init.
 (define-key global-map
     [menu-bar org-roam dailies-capture-today]
     '("Dailies Capture Today" . org-roam-dailies-capture-today))
+(define-key global-map
+    [menu-bar org-roam convert-to-node]
+    '("Convert current file to node" . my/org-roam-convert-to-node))
+(define-key global-map
+    [menu-bar org-roam ql-search]
+    '("QL search" . org-roam-ql-search))
+(define-key global-map
+    [menu-bar org-roam filter-backlinks-by-tags]
+    '("Filter backlinks by tags" . my/org-roam-filter-backlinks-by-tags))
 (define-key global-map
     [menu-bar org-roam capture]
     '("Capture" . org-roam-capture))
