@@ -3320,6 +3320,17 @@ my/org-roam-vault-init.
 Строим запросы по org сродни SQL. Может использоваться, как бэкэнд для
 показа агенды.
 
+Сначала, для совместимости с предыдущими версиями Org-note,
+продублируем тут соединение с quelpa (так-то оно находятся в [[./init.el][init.el]]).
+
+#+begin_src emacs-lisp :tangle yes
+(use-package quelpa-use-package
+    :ensure t)
+(require 'quelpa-use-package)
+#+end_src
+
+Теперь сама установка.
+
 #+begin_src emacs-lisp :tangle yes
 (provide 'seq-25)
 (use-package org-ql
