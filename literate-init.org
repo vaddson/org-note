@@ -221,13 +221,27 @@ email clients, file templates and snippets."
 ** Красивая статусная панель Doom-modeline
 
 Выглядит красиво, новичков пугает меньше.
-Установим.
+
+Сперва установим иконки.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package nerd-icons
+    :ensure t)
+(use-package all-the-icons-nerd-fonts
+	:ensure t)
+(use-package all-the-icons
+    :if (display-graphic-p))
+;; (nerd-icons-install-fonts t)
+#+end_src
+
+Установим саму панель.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package doom-modeline
     :ensure t
     :init
-    (doom-modeline-mode 1))
+    (doom-modeline-mode 1)
+    (column-number-mode 1))
 #+end_src
 
 ** Показ объекта внутри которого находится курсор (header-line)
