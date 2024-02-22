@@ -231,7 +231,10 @@ email clients, file templates and snippets."
 	:ensure t)
 (use-package all-the-icons
     :if (display-graphic-p))
-;; (nerd-icons-install-fonts t)
+(unless (boundp 'is-nerd-icons-install-fonts)
+    (nerd-icons-install-fonts t)
+    (setq is-nerd-icons-install-fonts t)
+    (customize-save-variable 'is-nerd-icons-install-fonts t))
 #+end_src
 
 Установим саму панель.
