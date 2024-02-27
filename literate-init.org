@@ -2970,7 +2970,10 @@ For example: 'or' logic instead of 'and' logic:
 
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-roam--make-subdirectory-template (subdirectory-name)
-    (let* ((subdirectory-name (string-replace " " "-" subdirectory-name))
+    (let* ((subdirectory-name (string-replace " " "-"
+                                              subdirectory-name))
+           (subdirectory-name (string-replace "data" "datta"
+                                              subdirectory-name))  ;; bug fix
            (occupied-keys (mapcar 'car org-roam-capture-templates))
            (key (my/org-roam--choose-directory-key subdirectory-name
                                                    occupied-keys))
