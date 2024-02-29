@@ -3479,8 +3479,8 @@ node.
         (:symbol file-atime-r
          :description "Recerse sort by file atime."
          :predicate (lambda (node1 node2)
-                        (not (string< (org-roam-node-file-atime node1)
-                                      (org-roam-node-file-atime node2)))))
+                        (not (my/time< (org-roam-node-file-atime node1)
+                                       (org-roam-node-file-atime node2)))))
         (:symbol file-title
          :description "Sort by file title."
          :predicate (lambda (node1 node2)
