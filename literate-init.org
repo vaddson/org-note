@@ -3916,6 +3916,8 @@ Mermaid - это аналог PlantUML. Для работы требует ус�
 #+begin_src emacs-lisp :tangle yes
 (use-package mermaid-mode
     :ensure t)
+(use-package ob-mermaid
+    :ensure t)
 #+end_src
 
 Позаботимся о вычислении org-babel блоков.
