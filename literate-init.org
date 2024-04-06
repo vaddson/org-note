@@ -4016,6 +4016,8 @@ Gnuplot в систему. На Arch это выглядит так:
 #+begin_src emacs-lisp :tangle yes
 (use-package php-mode
     :ensure t)
+(use-package ob-php
+    :ensure t)
 #+end_src
 
 Позаботимся о вычислении org-babel блоков.
@@ -4030,6 +4032,8 @@ Gnuplot в систему. На Arch это выглядит так:
 
 #+begin_src emacs-lisp :tangle yes
 (use-package kotlin-mode
+    :ensure t)
+(use-package ob-kotlin
     :ensure t)
 #+end_src
 
