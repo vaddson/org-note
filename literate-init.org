@@ -3346,6 +3346,8 @@ my/org-roam-vault-init.
 
 #+begin_src emacs-lisp :tangle yes
 (use-package quelpa-use-package
+    :init
+    (setq quelpa-update-melpa-p nil)
     :ensure t)
 (require 'quelpa-use-package)
 #+end_src
