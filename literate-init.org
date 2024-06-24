@@ -3345,6 +3345,8 @@ my/org-roam-vault-init.
 продублируем тут соединение с quelpa (так-то оно находятся в [[./init.el][init.el]]).
 
 #+begin_src emacs-lisp :tangle yes
+(setq quelpa-update-melpa-p (not (package-installed-p 'quelpa-use-package)))
+
 (use-package quelpa-use-package
     :ensure t)
 (require 'quelpa-use-package)
