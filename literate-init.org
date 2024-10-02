@@ -2420,12 +2420,17 @@ sudo apt install dvipng preview-latex-style
 раз и создает заголовку два свойства (ID и CUSTOM_ID) с одинаковым
 значением. Значение копируется в буфер обмена.
 
+Также исправим баг, где при значении переменной org-fold-core-style,
+установленной в 'overlays, возникали неудобства со схлопыванием
+drawer'ов.
+
 #+begin_src emacs-lisp :tangle yes
 (defun my/org-id-copy ()
     (interactive)
-    (when-let (id (org-id-get nil 'create))
-        (org-set-property "CUSTOM_ID" id)
-        (org-kill-new id)))
+    (let ((org-fold-core-style 'text-properties))
+        (when-let (id (org-id-get nil 'create))
+            (org-set-property "CUSTOM_ID" id)
+            (org-kill-new id))))
 #+end_src
 
 Добавляем горячие клавиши.
