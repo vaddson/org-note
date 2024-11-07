@@ -2909,6 +2909,32 @@ For example: 'or' logic instead of 'and' logic:
 (define-key org-mode-map (kbd "C-c r d t") 'org-roam-tag-remove)
 #+end_src
 
+** Исключение тегов из наследования
+
+Некоторые теги неудобно наследовать. Например тег документов-списков
+"<list": если его ноды находятся в его же файле, то все они этот тег
+унаследуют.
+
+В этой пометим все не наследуемые теги префиксом '~'. Код ниже
+исключает такие теги из наследования.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/remove-hash-tags (tags)
+    (mapcar
+     (lambda (tag-list)
+         (cl-remove ?< tag-list :key #'string-to-char :test #'char-equal))
+     tags))
+
+(advice-add 'org-remove-uninherited-tags :filter-args #'my/remove-hash-tags)
+#+end_src
+
+Точечно выводить теги из наследования можно через переменную
+: org-tags-exclude-from-inheritance
+Например:
+: (setq org-tags-exclude-from-inheritance
+:       (append '("tag1" "next_tag")
+:               org-tags-exclude-from-inheritance))
+
 ** Шаблоны
    :PROPERTIES:
    :ID:       eb0ed05e-acc3-40b7-afd2-0cbf8f8e0ad7
