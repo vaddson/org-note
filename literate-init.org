@@ -118,6 +118,17 @@ email clients, file templates and snippets."
 (setq warning-minimum-level :error)
 #+end_src
 
+Подцепим работу с qelpa. Если пакет не установлен, то позаботимся о
+первом обновлении.
+
+#+begin_src emacs-lisp :tangle yes
+(setq quelpa-update-melpa-p (not (package-installed-p 'quelpa-use-package)))
+
+(use-package quelpa-use-package
+    :ensure t)
+(require 'quelpa-use-package)
+#+end_src
+
 * Пока редактор загружается, поправим ему внешний вид
 
 ** Меню и панель инструментов (menu and toolbar)
@@ -2726,17 +2737,22 @@ daily-заметку, она автоматом помечается тегом 
 
 ** Установка
 
-Загрузка пакета и начальная инициализация.
+Боремся с рассинхроном пакетов при их обновлении.
 
 #+begin_src emacs-lisp :tangle yes
 (provide 'seq-25)
+#+end_src
+
+Загрузка пакета и начальная инициализация.
+
+#+begin_src emacs-lisp :tangle yes
 (use-package org-roam
     :ensure t
     :init
     (setq org-roam-directory (file-truename "~/org/roam/"))
     (mkdir org-roam-directory t)
     (setq org-roam-v2-ack t)
-    (setq org-roam-database-connector 'sqlite)
+    (setq org-roam-database-connector 'sqlite-builtin)
     :config
     (add-hook 'org-roam-mode-hook #'my/set-word-wrap)
     (setq org-roam-node-display-template (concat (propertize "${tags:40}  " 'face 'org-tag) "${title:*} "))
