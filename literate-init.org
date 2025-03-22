@@ -3791,6 +3791,57 @@ treemacs при показе текущего файла в дереве про�
 (define-key cfw:calendar-mode-map "d" #'cfw:org-open-agenda-day)
 #+end_src
 
+** Ollama-buddy. Клиент для Ollama
+
+Клиент для Ollama. Сервер для Ollama при этом должен быть
+запущен. Через docker это можно сделать так:
+: docker pull ollama/ollama
+: docker run -d --restart always -v ~/.ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama
+Или установив ollama локально, запустить командой:
+: ollama serve
+
+Ссылка на докер с соответствующей информацией:
+- https://hub.docker.com/r/ollama/ollama
+
+Сокращенная подсказка на старте:
+| Действие                           | Клавиши |
+|------------------------------------+---------|
+| Ask me anything!                   | C-c C-c |
+| Change model                       | C-c m   |
+| Cancel request                     | C-c k   |
+| Browse prompt history              | M-p/M-n |
+| Advanced interface (show all tips) | C-c A   |
+
+Полная подсказка:
+| Действие                            | Клавииши              |
+|-------------------------------------+-----------------------|
+| Ask me anything!                    | C-c C-c               |
+| Show Help/Token-usage/System-prompt | C-c h/U/C-s           |
+| Model Change/Info/Cancel            | C-c m/i/k             |
+| Cancel request                      | C-c k                 |
+| Prompt history                      | M-p/M-n               |
+| Session New/Load/Save/List/Delete   | C-c N/L/S/Q/Z         |
+| History Toggle/Clear/Show/Edit      | C-c H/X/V/E           |
+| Prompt to multiple models           | C-c M                 |
+| Parameter Edit/Show/Help/Reset      | C-c P/G/I/K           |
+| System Prompt/Clear                 | C-u/+C-u +C-u C-c C-c |
+| Toggle JSON/Token/Params/Format     | C-c D/T/F/C-o         |
+| Basic interface (simpler display)   | C-c A                 |
+
+Устанавливаем клиента.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package ollama-buddy
+    :ensure t)
+#+end_src
+
+Горячие клавиши.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c m") #'ollama-buddy-menu)
+(global-set-key (kbd "C-c M") #'ollama-buddy-transient-menu)
+#+end_src
+
 * Буфер на старте с логотипом (dashboard)
 
 ** Приветственная страница
