@@ -451,7 +451,7 @@ cua-mode в намерении осваивать Emacs.
 #+begin_src emacs-lisp :tangle yes
 (setq scroll-step 1
       scroll-preserve-screen-position t  ;; nil
-      scroll-margin 0  ;; 0
+      scroll-margin (if (>= emacs-major-version 30) 1 0)  ;; 0
       scroll-conservatively 10000  ;; 0
       maximum-scroll-margin 0.0  ;; 0.25
       scroll-up-aggressively 0.0   ;; nil
