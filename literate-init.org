@@ -3842,6 +3842,21 @@ treemacs при показе текущего файла в дереве про�
 (global-set-key (kbd "C-c M") #'ollama-buddy-transient-menu)
 #+end_src
 
+Меню.
+
+#+begin_src emacs-lisp :tangle yes
+(define-key-after global-map [menu-bar ollama]
+    (cons "Ollama" (make-sparse-keymap "Ollama")) 'ollama)
+
+(define-key global-map
+    [menu-bar ollama ollama-transient-menu]
+    '("Advanced Menu" . ollama-buddy-transient-menu))
+
+(define-key global-map
+    [menu-bar ollama ollama-menu]
+    '("Basic Menu" . ollama-buddy-menu))
+#+end_src
+
 * Буфер на старте с логотипом (dashboard)
 
 ** Приветственная страница
