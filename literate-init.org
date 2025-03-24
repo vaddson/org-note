@@ -460,13 +460,21 @@ cua-mode в намерении осваивать Emacs.
 Прокрутка курсором по одной строке.
 
 #+begin_src emacs-lisp :tangle yes
-(setq scroll-step 1
-      scroll-preserve-screen-position t  ;; nil
-      scroll-margin (if (>= emacs-major-version 30) 1 0)  ;; 0
-      scroll-conservatively 10000  ;; 0
-      maximum-scroll-margin 0.0  ;; 0.25
-      scroll-up-aggressively 0.0   ;; nil
-      scroll-down-aggressively 0.0)  ;; nil
+(if (>= emacs-major-version 30)
+    (setq scroll-step 1
+          scroll-preserve-screen-position t  ;; nil
+          scroll-margin 1  ;; 0
+          scroll-conservatively 10000  ;; 0
+          maximum-scroll-margin 0.1  ;; 0.25
+          scroll-up-aggressively 0.0   ;; nil
+          scroll-down-aggressively 0.0)  ;; nil
+    (setq scroll-step 1
+          scroll-preserve-screen-position t  ;; nil
+          scroll-margin 0  ;; 0
+          scroll-conservatively 10000  ;; 0
+          maximum-scroll-margin 0.0  ;; 0.25
+          scroll-up-aggressively 0.0   ;; nil
+          scroll-down-aggressively 0.0))  ;; nil
 #+end_src
 
 Начиная с Emacs 29, имеем плавную прокрутку по пикселям. Наконец-то
