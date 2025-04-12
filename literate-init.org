@@ -3972,6 +3972,24 @@ sudo apt install retext
 ;; ...
 #+end_src
 
+** CSV и TSV
+
+Официальная страница: [[https://elpa.gnu.org/packages/csv-mode.html][csv-mode]].
+
+Режим для работы с CSV-файлами. Определяет правильно поля и колонки,
+перемещается по ним через TAB и S-TAB. Умеет сортировать по колонкам и
+т.п.. Подцепляет также работу с TSV.
+
+Управление начинается с клавиш Ctrl-c.
+
+Устанавливаем пакет.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package csv-mode
+    :ensure t
+    :hook (csv-mode . csv-guess-set-separator))
+#+end_src
+
 ** Yaml
 
 Подсветка yaml-файлов.
