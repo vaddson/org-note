@@ -3880,20 +3880,24 @@ treemacs при показе текущего файла в дереве про�
 вкладку.
 
 #+begin_src emacs-lisp :tangle yes
-(defun my/ollama--gui-wrapper (func &rest args)
-	(interactive)
-    (when (my/from-menu-p)
-        (tab-new)
-        (my/prevent-new-tab 'charge))
-    (apply func args)
-	(delete-other-windows))
-
 (advice-add #'ollama-buddy-menu
             :around
-            'my/ollama--gui-wrapper)
+            (lambda (func &rest args)
+                (interactive)
+                (when (my/from-menu-p)
+                    (tab-new)
+                    (my/prevent-new-tab 'charge))
+                (apply func args)
+                (delete-other-windows)))
+
 (advice-add #'ollama-buddy-transient-menu
             :around
-            'my/ollama--gui-wrapper)
+            (lambda (func &rest args)
+                (interactive)
+                (when (my/from-menu-p)
+                    (tab-new)
+                    (my/prevent-new-tab 'charge))
+                (apply func args)))
 #+end_src
 
 * Буфер на старте с логотипом (dashboard)
