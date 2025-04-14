@@ -3876,6 +3876,26 @@ treemacs при показе текущего файла в дереве про�
     '("Basic Menu" . ollama-buddy-menu))
 #+end_src
 
+Если окно Ollama вызвана через меню, то сделаем для него отдельную
+вкладку.
+
+#+begin_src emacs-lisp :tangle yes
+(defun my/ollama--gui-wrapper (func &rest args)
+	(interactive)
+    (when (my/from-menu-p)
+        (tab-new)
+        (my/prevent-new-tab 'charge))
+    (apply func args)
+	(delete-other-windows))
+
+(advice-add #'ollama-buddy-menu
+            :around
+            'my/ollama--gui-wrapper)
+(advice-add #'ollama-buddy-transient-menu
+            :around
+            'my/ollama--gui-wrapper)
+#+end_src
+
 * Буфер на старте с логотипом (dashboard)
 
 ** Приветственная страница
