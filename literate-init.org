@@ -3885,12 +3885,13 @@ treemacs при показе текущего файла в дереве про�
             (lambda (func &rest args)
                 (interactive)
                 (let ((bname (if (buffer-name) (buffer-name) "")))
-                    (when (and (my/from-menu-p)
+                    (if (and (my/from-menu-p)
                                (not (string-prefix-p "*Ollama Buddy Chat" bname)))
-                        (tab-new)
-                        (my/prevent-new-tab 'charge))
-                    (apply func args)
-                    (delete-other-windows))))
+                        (progn (tab-new)
+                               (my/prevent-new-tab 'charge)
+                               (apply func args)
+                               (delete-other-windows))
+                        (apply func args)))))
 #+end_src
 
 * Буфер на старте с логотипом (dashboard)
