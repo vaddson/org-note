@@ -3503,16 +3503,18 @@ node.
 #+end_src
 
 #+RESULTS:
-| Функция сортировки | Комментарий                 |
-|--------------------+-----------------------------|
-| title              | Sort by title.              |
-| title-r            | Reverse sort by title.      |
-| file-mtime         | Sort by file mtime.         |
-| file-mtime-r       | Reverse sort by file mtime. |
-| file-atime         | Sort by file atime.         |
-| file-atime-r       | Recerse sort by file atime. |
-| file-title         | Sort by file title.         |
-| file-title-r       | Reverse sort by file title. |
+| Функция сортировки | Комментарий                                                                    |
+|--------------------+--------------------------------------------------------------------------------|
+| title              | Sort by title.                                                                 |
+| title-r            | Reverse sort by title.                                                         |
+| file-mtime         | Sort by file mtime.                                                            |
+| file-mtime-r       | Reverse sort by file mtime.                                                    |
+| file-atime         | Sort by file atime.                                                            |
+| file-atime-r       | Recerse sort by file atime.                                                    |
+| file-title         | Sort by file title.                                                            |
+| file-title-r       | Reverse sort by file title.                                                    |
+| title-date         | Sort by date in title.                                                         |
+| title-date-r       | Reverse sort by date in title like "...<YYYY-mm-dd..." or "...(YYYY-mm-dd...". |
 
 Устанавливаем эту хорошую штуку.
 
@@ -3574,11 +3576,44 @@ node.
          :predicate (lambda (node1 node2)
                         (not (string< (org-roam-node-file-title node1)
                                       (org-roam-node-file-title node2)))))
+        (:symbol title-date
+         :description "Sort by date in title."
+         :predicate (lambda (node1 node2)
+                        (my/title-date< (org-roam-node-title node1)
+                                        (org-roam-node-title node2))))
+        (:symbol title-date-r
+         :description "Reverse sort by date in title like \"...<YYYY-mm-dd...\" or \"...(YYYY-mm-dd...\"."
+         :predicate (lambda (node1 node2)
+                        (my/title-date> (org-roam-node-title node1)
+                                        (org-roam-node-title node2))))
         ))
 
 (defun my/time< (time1 time2)
     (string< (format-time-string "%Y-%m-%dT%H:%M:%S" time1)
              (format-time-string "%Y-%m-%dT%H:%M:%S" time2)))
+
+(defun my/title-date< (title1 title2)
+    (let ((date1 (my/match-date title1))
+          (date2 (my/match-date title2)))
+        (cond ((and date1 date2)
+               (string< date1 date2))
+              ((and (not date1) date2)
+               nil)
+              (t t))))
+
+(defun my/title-date> (title1 title2)
+    (let ((date1 (my/match-date title1))
+          (date2 (my/match-date title2)))
+        (cond ((and date1 date2)
+               (string> date1 date2))
+              ((and date1 (not date2))
+               nil)
+              (t t))))
+
+(defun my/match-date (str)
+    (when-let (pos (string-match
+                    "[\\<|\\(][0-9][0-9][0-9][0-9]\-[0-9][0-9]\-[0-9][0-9]" str))
+        (substring str (1+ pos) (+ pos 11))))
 
 (dolist (dict my/org-roam--sort-fn-list)
     (org-roam-ql-register-sort-fn (plist-get dict :symbol)
