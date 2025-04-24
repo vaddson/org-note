@@ -3755,8 +3755,10 @@ node.
               (t t))))
 
 (defun my/match-date (str)
-    (when-let (pos (string-match
-                    "[\\<|\\(][0-9][0-9][0-9][0-9]\-[0-9][0-9]\-[0-9][0-9]" str))
+    (when-let
+        (pos (string-match
+              "[\\<|\\(][0-9][0-9][0-9][0-9]\-[0-9][0-9]\-[0-9][0-9].+[\\>|\\)]"
+              str))
         (substring str (1+ pos) (+ pos 11))))
 
 (dolist (dict my/org-roam--sort-fn-list)
