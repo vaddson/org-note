@@ -31,6 +31,10 @@
 ;; Установим темы заранее для того, чтобы загружать их через customize.
 (use-package doom-themes
     :ensure t)
+(use-package modus-themes
+    :ensure t)
+(use-package ef-themes
+    :ensure t)
 
 ;; Напишем свою загрузку org-конфигов для ускорения.
 ;;   EL-файл не будет пересобираться, если в том не будет необходимости.
