@@ -2183,7 +2183,12 @@ text-mode, то он отменит перенос строк. :)
 (add-hook 'org-mode-hook #'my/set-word-wrap)
 #+end_src
 
-Для переключения переноса строк используются клавиши =Ctrl-x x t=.
+Для переключения переноса строк используются клавиши =Ctrl-x x t=. Но
+добавим и свой вариант =Ctrl-c w=.
+
+#+begin_src emacs-lisp :tangle yes
+(global-set-key (kbd "C-c w") #'my/set-word-wrap)
+#+end_src
 
 ** Поддержка org-календаря
 
